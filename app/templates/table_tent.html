@@ -96,7 +96,7 @@
             <div class="relative p-[5px] rounded-[28px] gradient-border shadow-xl shadow-pink-500/15 mb-6 group transition-transform">
                 <div class="bg-white p-3.5 rounded-[24px] flex items-center justify-center">
                     <img 
-                        src="/api/qr/{{ business_id }}{% if table_number %}?table={{ table_number }}{% endif %}" 
+                        src="/api/qr/{{ business_id }}?v=2{% if table_number %}&table={{ table_number }}{% endif %}" 
                         alt="QR-код для отзыва" 
                         class="w-52 h-52 object-contain select-none rounded-xl"
                         loading="eager"

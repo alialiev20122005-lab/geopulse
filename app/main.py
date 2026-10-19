@@ -257,6 +257,7 @@ async def generate_qr(business_id: str, request: Request, table: Optional[str] =
 
     from qrcode.image.styledpil import StyledPilImage
     from qrcode.image.styles.moduledrawers.pil import RoundedModuleDrawer
+    from qrcode.image.styles.colormasks import HorizontalGradiantColorMask
 
     base_url = str(request.base_url).rstrip("/")
     target_url = f"{base_url}/r/{business_id}"
@@ -271,11 +272,17 @@ async def generate_qr(business_id: str, request: Request, table: Optional[str] =
     qr.add_data(target_url)
     qr.make(fit=True)
 
+    # Красочный градиент для самого QR-кода (от сочного индиго к неоновому розовому/коралловому)
+    color_mask = HorizontalGradiantColorMask(
+        back_color=(255, 255, 255),
+        left_color=(79, 70, 229),    # Индиго #4f46e5
+        right_color=(225, 29, 72)    # Сочный розовый #e11d48
+    )
+
     img = qr.make_image(
         image_factory=StyledPilImage,
         module_drawer=RoundedModuleDrawer(),
-        back_color="#ffffff",
-        fill_color="#0f172a"
+        color_mask=color_mask
     )
     buf = io.BytesIO()
     img.save(buf, format="PNG")
