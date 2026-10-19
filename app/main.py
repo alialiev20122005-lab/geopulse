@@ -54,90 +54,15 @@ class FeedbackPayload(BaseModel):
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request):
-    """Главная страница панели со всеми зарегистрированными заведениями."""
+    """Главная страница — конверсионный SaaS-лендинг платформы GeoPulse."""
     businesses = get_all_businesses()
-    
-    html_cards = ""
-    for b in businesses:
-        owners = get_business_chat_ids(b["id"])
-        owner_badge = f'<span class="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded-full">TG: {len(owners)} подключен(о)</span>' if owners else '<span class="bg-amber-100 text-amber-800 text-[10px] font-bold px-2 py-0.5 rounded-full">TG не привязан</span>'
-        
-        html_cards += f"""
-        <div class="p-5 rounded-2xl border border-slate-200/80 hover:border-amber-400 bg-white shadow-sm hover:shadow-md transition flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-                <div class="flex items-center gap-2 mb-1">
-                    <span class="text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-md">{b["category"]}</span>
-                    {owner_badge}
-                </div>
-                <h3 class="text-lg font-bold text-slate-900">{b["name"]}</h3>
-                <p class="text-xs text-slate-500">{b["address"]}</p>
-            </div>
-            <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-                <a href="/dashboard/{b['id']}" class="flex-1 sm:flex-none text-center bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-3 py-2 rounded-xl transition">
-                    Дашборд 📊
-                </a>
-                <a href="/print/{b['id']}" target="_blank" class="flex-1 sm:flex-none text-center bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 text-xs font-semibold px-3 py-2 rounded-xl transition">
-                    Тейбл-тент 🖨️
-                </a>
-                <a href="/r/{b['id']}" target="_blank" class="flex-1 sm:flex-none text-center bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold px-4 py-2 rounded-xl transition">
-                    Экран гостя ↗
-                </a>
-            </div>
-        </div>
-        """
-
-    content = f"""
-    <!DOCTYPE html>
-    <html lang="ru">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>GeoPulse — Мульти-тенант платформа</title>
-        <script src="https://cdn.tailwindcss.com"></script>
-        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-        <style>body {{ font-family: 'Inter', sans-serif; }}</style>
-    </head>
-    <body class="bg-slate-50 text-slate-900 p-4 sm:p-8 min-h-screen">
-        <div class="max-w-3xl mx-auto">
-            
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-slate-200">
-                <div>
-                    <div class="inline-flex items-center gap-1.5 bg-amber-100 text-amber-800 text-[11px] px-3 py-1 rounded-full font-bold uppercase tracking-wider mb-2">
-                        <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                        Мульти-тенант движок активен
-                    </div>
-                    <h1 class="text-3xl font-extrabold text-slate-900">GeoPulse Control Center</h1>
-                    <p class="text-xs text-slate-500 mt-1">Единая платформа перехвата негатива и защиты рейтинга</p>
-                </div>
-                <div>
-                    <a href="/new" class="inline-flex items-center gap-2 bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-600 hover:to-amber-700 text-white font-bold text-xs py-3 px-5 rounded-xl shadow-lg shadow-amber-500/20 transition active:scale-[0.98]">
-                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-                        + Подключить новое заведение
-                    </a>
-                </div>
-            </div>
-
-            <div class="space-y-4 mb-8">
-                {html_cards}
-            </div>
-
-            <div class="bg-slate-900 text-white rounded-3xl p-6 shadow-xl relative overflow-hidden">
-                <div class="relative z-10">
-                    <h3 class="text-base font-bold mb-1">Как работает подключение для бизнеса:</h3>
-                    <p class="text-xs text-slate-400 mb-4 leading-relaxed">
-                        Любое заведение регистрируется за 1 минуту. Владелец нажимает одну кнопку в Telegram и мгновенно связывается с точкой. Все отзывы направляются только ему.
-                    </p>
-                    <a href="/new" class="inline-block bg-white text-slate-900 font-bold text-xs py-2 px-4 rounded-xl hover:bg-slate-100 transition">
-                        Попробовать создать тестовое заведение →
-                    </a>
-                </div>
-            </div>
-
-        </div>
-    </body>
-    </html>
-    """
-    return HTMLResponse(content=content)
+    return templates.TemplateResponse(
+        request=request,
+        name="index.html",
+        context={
+            "businesses": businesses
+        }
+    )
 
 @app.get("/new", response_class=HTMLResponse)
 async def new_business_page(request: Request):
@@ -228,6 +153,25 @@ async def review_page(business_id: str, request: Request, table: Optional[str] =
             "business": business,
             "business_id": business_id,
             "table_number": table
+        }
+    )
+
+@app.get("/print/{business_id}/all", response_class=HTMLResponse)
+async def print_bulk_tents_page(business_id: str, request: Request, tables: int = 10):
+    """Массовая печать карточек столиков (раскладка А4 для типографии)."""
+    business = get_business(business_id)
+    if not business:
+        raise HTTPException(status_code=404, detail="Заведение не найдено")
+
+    count = max(1, min(100, tables))
+    return templates.TemplateResponse(
+        request=request,
+        name="table_tent_bulk.html",
+        context={
+            "business": business,
+            "business_id": business_id,
+            "tables_count": count,
+            "tables_range": list(range(1, count + 1))
         }
     )
 

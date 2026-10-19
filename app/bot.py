@@ -56,6 +56,9 @@ async def broadcast_feedback(business_id: str, rating: int, comment: str, contac
         contact=contact
     )
 
+    import re
+    import urllib.parse
+
     stars_str = "⭐" * rating
     table_info = f"\n🪑 <b>Столик:</b> {table_number}" if table_number else ""
     
@@ -76,9 +79,48 @@ async def broadcast_feedback(business_id: str, rating: int, comment: str, contac
         f"💡 <i>Нажмите на текст в рамке выше, чтобы скопировать в 1 клик!</i>"
     )
 
+    # Формируем интерактивные кнопки для мгновенной связи
+    reply_markup = None
+    if contact:
+        buttons = []
+        # Извлекаем только цифры из телефона
+        digits = re.sub(r"\D", "", contact)
+        
+        # Если это российский номер (89... -> 79...)
+        if len(digits) == 11 and digits.startswith("8"):
+            digits = "7" + digits[1:]
+        elif len(digits) == 10:
+            digits = "7" + digits
+
+        if len(digits) >= 10:
+            wa_encoded_text = urllib.parse.quote(personal_reply)
+            buttons.append([
+                {
+                    "text": "💬 Написать клиенту в WhatsApp",
+                    "url": f"https://wa.me/{digits}?text={wa_encoded_text}"
+                }
+            ])
+            buttons.append([
+                {
+                    "text": "📞 Позвонить клиенту",
+                    "url": f"tel:+{digits}"
+                }
+            ])
+        elif contact.startswith("@"):
+            tg_username = contact.lstrip("@")
+            buttons.append([
+                {
+                    "text": "✈️ Написать клиенту в Telegram",
+                    "url": f"https://t.me/{tg_username}"
+                }
+            ])
+
+        if buttons:
+            reply_markup = {"inline_keyboard": buttons}
+
     success_count = 0
     for cid in chat_ids:
-        if await send_message(cid, text):
+        if await send_message(cid, text, reply_markup=reply_markup):
             success_count += 1
 
     return success_count

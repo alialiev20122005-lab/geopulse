@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ru" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GeoPulse — Защита рейтинга на Яндекс.Картах и 2ГИС | Умный перехват негатива</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+        .gradient-brand { background: linear-gradient(135deg, #4f46e5 0%, #a855f7 50%, #ec4899 100%); }
+        .gradient-text {
+            background: linear-gradient(135deg, #4f46e5 0%, #d946ef 50%, #f43f5e 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .gradient-border {
+            background: linear-gradient(135deg, #6366f1 0%, #ec4899 50%, #f59e0b 100%);
+        }
+    </style>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 antialiased selection:bg-indigo-500 selection:text-white">
+
+    <!-- Фоновые неоновые световые пятна (Ambient Glow) -->
+    <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div class="absolute -top-40 -left-40 w-96 h-96 bg-indigo-600/20 rounded-full blur-[128px]"></div>
+        <div class="absolute top-1/3 -right-40 w-96 h-96 bg-pink-600/20 rounded-full blur-[128px]"></div>
+        <div class="absolute -bottom-40 left-1/3 w-96 h-96 bg-amber-600/15 rounded-full blur-[128px]"></div>
+    </div>
+
+    <!-- Верхняя навигация (Navbar) -->
+    <header class="sticky top-0 z-50 backdrop-blur-xl bg-[#0b0f19]/80 border-b border-slate-800/80">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-20 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-2xl gradient-brand flex items-center justify-center text-white shadow-lg shadow-indigo-500/25">
+                    <span class="font-black text-xl">G</span>
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xl font-black tracking-tight text-white">GeoPulse</span>
+                        <span class="text-[10px] font-extrabold uppercase px-2 py-0.5 rounded-full bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">SaaS 2.0</span>
+                    </div>
+                    <p class="text-[10px] text-slate-400 font-medium">Защита репутации & Сбор 5★</p>
+                </div>
+            </div>
+
+            <nav class="hidden md:flex items-center gap-8 text-sm font-semibold text-slate-300">
+                <a href="#how-it-works" class="hover:text-white transition">Как это работает</a>
+                <a href="#calculator" class="hover:text-white transition">Калькулятор потерь</a>
+                <a href="#demo-points" class="hover:text-white transition">Демо-точки</a>
+                <a href="#pricing" class="hover:text-white transition">Тарифы</a>
+            </nav>
+
+            <div class="flex items-center gap-3">
+                <a href="#demo-points" class="hidden sm:inline-flex text-xs font-bold text-slate-300 hover:text-white px-4 py-2.5 rounded-xl border border-slate-800 hover:border-slate-700 transition">
+                    Панель точек
+                </a>
+                <a href="/new" class="gradient-brand hover:opacity-95 text-white font-bold text-xs py-2.5 px-5 rounded-xl shadow-lg shadow-pink-500/20 transition active:scale-95 flex items-center gap-1.5">
+                    <span>Подключить точку</span>
+                    <span>➔</span>
+                </a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Главный Hero-блок -->
+    <section class="relative z-10 pt-16 pb-20 md:pt-28 md:pb-32 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto text-center">
+        
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-slate-900/90 border border-indigo-500/30 text-indigo-300 text-xs font-bold mb-6 shadow-inner backdrop-blur-md">
+            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+            <span>Умный перехват негатива для Яндекс.Карт и 2ГИС</span>
+        </div>
+
+        <h1 class="text-4xl sm:text-6xl font-black tracking-tight text-white leading-[1.1] mb-6">
+            Поднимите рейтинг до <span class="gradient-text">4.9 ★</span><br>
+            и спасите гостей от ухода к конкурентам
+        </h1>
+
+        <p class="text-base sm:text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed mb-10 font-medium">
+            Довольные гости в 1 клик отправляются писать <b>хвалебные отзывы на Карты</b>. Недовольные — моментально попадают <b>в Telegram руководству</b> с готовым ответом от ИИ.
+        </p>
+
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+            <a href="/new" class="w-full sm:w-auto gradient-brand hover:opacity-95 text-white font-black text-base py-4 px-8 rounded-2xl shadow-2xl shadow-indigo-500/30 transition active:scale-95 flex items-center justify-center gap-2">
+                <span>Подключить за 1 минуту</span>
+                <span>➔</span>
+            </a>
+            <a href="/print/daikon" target="_blank" class="w-full sm:w-auto bg-slate-900/80 hover:bg-slate-800 text-slate-200 font-bold text-base py-4 px-8 rounded-2xl border border-slate-800 transition flex items-center justify-center gap-2">
+                <span>Посмотреть QR-карточку 🖨️</span>
+            </a>
+        </div>
+
+        <!-- Ключевые метрики доверия -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-3xl mx-auto">
+            <div class="bg-slate-900/60 border border-slate-800/80 p-4 rounded-2xl backdrop-blur-sm">
+                <p class="text-2xl sm:text-3xl font-black text-white">94%</p>
+                <p class="text-xs text-slate-400 mt-0.5">Перехвата негатива</p>
+            </div>
+            <div class="bg-slate-900/60 border border-slate-800/80 p-4 rounded-2xl backdrop-blur-sm">
+                <p class="text-2xl sm:text-3xl font-black text-emerald-400">+1.5★</p>
+                <p class="text-xs text-slate-400 mt-0.5">К рейтингу за месяц</p>
+            </div>
+            <div class="bg-slate-900/60 border border-slate-800/80 p-4 rounded-2xl backdrop-blur-sm">
+                <p class="text-2xl sm:text-3xl font-black text-indigo-400">30 сек</p>
+                <p class="text-xs text-slate-400 mt-0.5">Реакция управляющего</p>
+            </div>
+            <div class="bg-slate-900/60 border border-slate-800/80 p-4 rounded-2xl backdrop-blur-sm">
+                <p class="text-2xl sm:text-3xl font-black text-pink-400">100%</p>
+                <p class="text-xs text-slate-400 mt-0.5">Безопасно и по правилам</p>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- Секция: Как работает умный алгоритм GeoPulse -->
+    <section id="how-it-works" class="relative z-10 py-20 bg-slate-950/70 border-y border-slate-800/80 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-5xl mx-auto">
+            
+            <div class="text-center max-w-2xl mx-auto mb-16">
+                <span class="text-xs font-black uppercase tracking-widest text-indigo-400">Алгоритм работы</span>
+                <h2 class="text-3xl sm:text-4xl font-black text-white mt-2">Как GeoPulse фильтрует отзывы</h2>
+                <p class="text-sm text-slate-400 mt-2">Гость сканирует цветной QR-код на столике со своего телефона</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-stretch">
+                
+                <!-- Ветка 1: Позитив (4-5 звезд) -->
+                <div class="bg-gradient-to-b from-emerald-950/30 to-slate-900/80 border border-emerald-500/30 p-8 rounded-3xl flex flex-col justify-between">
+                    <div>
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-bold mb-4 border border-emerald-500/20">
+                            <span>⭐⭐⭐⭐⭐</span>
+                            <span>Оценка 4 или 5 звёзд</span>
+                        </div>
+                        <h3 class="text-2xl font-black text-white mb-2">Мгновенный буст рейтинга на Картах</h3>
+                        <p class="text-sm text-slate-400 leading-relaxed mb-6">
+                            Система благодарит гостя и в 1 клик перенаправляет его в приложение <b>Яндекс.Карт или 2ГИС</b>. Вы получаете органический поток восторженных отзывов 5★, который выводит ваше заведение в ТОП выдачи района.
+                        </p>
+                    </div>
+                    <div class="bg-slate-950/80 p-4 rounded-2xl border border-emerald-500/20 flex items-center gap-3 text-xs text-emerald-300 font-semibold">
+                        <span class="text-xl">🚀</span>
+                        <span>Прямой трафик на официальную карточку заведения в Картах</span>
+                    </div>
+                </div>
+
+                <!-- Ветка 2: Негатив (1-3 звезды) -->
+                <div class="bg-gradient-to-b from-rose-950/30 to-slate-900/80 border border-rose-500/30 p-8 rounded-3xl flex flex-col justify-between">
+                    <div>
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-rose-500/10 text-rose-400 text-xs font-bold mb-4 border border-rose-500/20">
+                            <span>⭐ / ⭐⭐ / ⭐⭐⭐</span>
+                            <span>Оценка 1, 2 или 3 звезды</span>
+                        </div>
+                        <h3 class="text-2xl font-black text-white mb-2">Умный перехват в Telegram</h3>
+                        <p class="text-sm text-slate-400 leading-relaxed mb-6">
+                            Негатив <b>не попадает в интернет</b>! Гость высказывает претензию во внутренней вежливой форме. Через 3 секунды управляющий получает алерт в Telegram с номером столика, контактом гостя и готовыми ответами от нейросети.
+                        </p>
+                    </div>
+                    <div class="bg-slate-950/80 p-4 rounded-2xl border border-rose-500/20 flex items-center gap-3 text-xs text-rose-300 font-semibold">
+                        <span class="text-xl">🛡️</span>
+                        <span>Гость ещё за столиком, а конфликт уже улажен комплиментом</span>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Секция: Интерактивный ROI-калькулятор потерь -->
+    <section id="calculator" class="relative z-10 py-20 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
+        <div class="bg-slate-900/90 border border-slate-800 p-8 sm:p-12 rounded-[36px] shadow-2xl backdrop-blur-xl">
+            
+            <div class="text-center max-w-xl mx-auto mb-10">
+                <span class="text-xs font-black uppercase tracking-widest text-pink-400">Экономика рейтинга</span>
+                <h2 class="text-3xl font-black text-white mt-1">Сколько денег вам стоит падение рейтинга?</h2>
+                <p class="text-xs sm:text-sm text-slate-400 mt-2">По статистике Яндекс.Карт, падение оценки ниже 4.5★ снижает приток новых гостей на 15–25%.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
+                
+                <div class="space-y-6">
+                    <div>
+                        <div class="flex justify-between text-xs font-bold text-slate-300 mb-2">
+                            <span>Гостей в день:</span>
+                            <span id="guests-val" class="text-indigo-400 font-black text-sm">120 чел.</span>
+                        </div>
+                        <input type="range" id="guests-slider" min="30" max="400" value="120" step="10" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-indigo-500" oninput="updateROI()">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-xs font-bold text-slate-300 mb-2">
+                            <span>Средний чек:</span>
+                            <span id="check-val" class="text-pink-400 font-black text-sm">1 200 ₽</span>
+                        </div>
+                        <input type="range" id="check-slider" min="400" max="4000" value="1200" step="100" class="w-full h-2 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-pink-500" oninput="updateROI()">
+                    </div>
+                </div>
+
+                <div class="bg-gradient-to-br from-rose-950/40 via-slate-950 to-slate-950 border border-rose-500/20 p-6 rounded-3xl text-center">
+                    <p class="text-xs font-bold uppercase tracking-wider text-slate-400">Упущенная выручка в месяц:</p>
+                    <p id="loss-val" class="text-4xl font-black text-rose-500 my-2">648 000 ₽</p>
+                    <p class="text-xs text-slate-400 leading-snug">
+                        GeoPulse сохраняет эти деньги всего за <span class="text-white font-bold">1 990 ₽/мес</span>. Окупаемость — в первый же уикенд!
+                    </p>
+                    <a href="/new" class="mt-4 inline-block w-full gradient-brand hover:opacity-95 text-white font-bold text-xs py-3 px-4 rounded-xl shadow-lg shadow-pink-500/20 transition">
+                        Защитить заведение ➔
+                    </a>
+                </div>
+
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Секция: Подключенные демонстрационные точки -->
+    <section id="demo-points" class="relative z-10 py-20 bg-slate-950/70 border-t border-slate-800/80 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-6xl mx-auto">
+            
+            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-12">
+                <div>
+                    <span class="text-xs font-black uppercase tracking-widest text-indigo-400">Живое тестирование</span>
+                    <h2 class="text-3xl font-black text-white mt-1">Демо-заведения платформы</h2>
+                    <p class="text-xs sm:text-sm text-slate-400 mt-1">Нажмите на любую точку, чтобы протестировать карточки, массовую печать столов или экран гостя.</p>
+                </div>
+                <a href="/new" class="gradient-brand text-white font-bold text-xs py-3 px-5 rounded-xl shadow-lg transition active:scale-95 flex-shrink-0 flex items-center gap-1.5 self-start sm:self-auto">
+                    <span>+ Добавить своё заведение</span>
+                </a>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {% for b in businesses %}
+                <div class="bg-slate-900/80 border border-slate-800 p-6 rounded-3xl hover:border-slate-700 transition flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between gap-2 mb-2">
+                            <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300">{{ b.category }}</span>
+                            <span class="text-xs font-mono text-slate-500">ID: {{ b.id }}</span>
+                        </div>
+                        <h3 class="text-xl font-black text-white">{{ b.name }}</h3>
+                        <p class="text-xs text-slate-400 mt-1">{{ b.address }}</p>
+                    </div>
+
+                    <div class="flex flex-wrap items-center gap-2 mt-6 pt-4 border-t border-slate-800/80">
+                        <a href="/dashboard/{{ b.id }}" class="flex-1 text-center bg-slate-800 hover:bg-slate-700 text-white text-xs font-bold py-2.5 px-3 rounded-xl transition">
+                            Дашборд 📊
+                        </a>
+                        <a href="/print/{{ b.id }}" target="_blank" class="flex-1 text-center bg-indigo-950/60 hover:bg-indigo-900 border border-indigo-500/30 text-indigo-300 text-xs font-bold py-2.5 px-3 rounded-xl transition">
+                            QR 1 стол 🖨️
+                        </a>
+                        <a href="/print/{{ b.id }}/all?tables=10" target="_blank" class="flex-1 text-center bg-pink-950/60 hover:bg-pink-900 border border-pink-500/30 text-pink-300 text-xs font-bold py-2.5 px-3 rounded-xl transition">
+                            Все столы 📋
+                        </a>
+                        <a href="/r/{{ b.id }}" target="_blank" class="flex-1 text-center bg-white hover:bg-slate-100 text-slate-950 text-xs font-black py-2.5 px-4 rounded-xl transition shadow">
+                            Экран гостя ↗
+                        </a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Секция: Тарифы -->
+    <section id="pricing" class="relative z-10 py-20 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
+        <div class="text-center max-w-xl mx-auto mb-16">
+            <span class="text-xs font-black uppercase tracking-widest text-indigo-400">Прозрачные цены</span>
+            <h2 class="text-3xl sm:text-4xl font-black text-white mt-1">Тарифы для заведений любого масштаба</h2>
+            <p class="text-sm text-slate-400 mt-2">14 дней бесплатного тестирования на всех тарифах без привязки банковской карты.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
+            
+            <!-- Тариф 1: Старт -->
+            <div class="bg-slate-900/60 border border-slate-800 p-8 rounded-3xl flex flex-col justify-between">
+                <div>
+                    <h3 class="text-lg font-black text-white">Старт</h3>
+                    <p class="text-xs text-slate-400 mt-1">Для кофеен, барбершопов и небольших точек</p>
+                    <div class="my-6">
+                        <span class="text-4xl font-black text-white">1 990 ₽</span>
+                        <span class="text-xs text-slate-400">/ месяц</span>
+                    </div>
+                    <ul class="space-y-3 text-xs text-slate-300 font-medium">
+                        <li class="flex items-center gap-2"><span class="text-emerald-400">✔</span> 1 заведение (до 10 столов)</li>
+                        <li class="flex items-center gap-2"><span class="text-emerald-400">✔</span> Цветные QR-карточки</li>
+                        <li class="flex items-center gap-2"><span class="text-emerald-400">✔</span> Перехват негатива в Telegram</li>
+                        <li class="flex items-center gap-2"><span class="text-emerald-400">✔</span> Ответы от ИИ (WhatsApp + Карты)</li>
+                    </ul>
+                </div>
+                <a href="/new" class="mt-8 block w-full text-center bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs py-3 rounded-xl transition">
+                    Попробовать бесплатно
+                </a>
+            </div>
+
+            <!-- Тариф 2: Бизнес (Популярный) -->
+            <div class="bg-gradient-to-b from-indigo-950/60 via-slate-900 to-slate-900 border-2 border-indigo-500 p-8 rounded-3xl flex flex-col justify-between relative shadow-2xl shadow-indigo-500/20">
+                <span class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-indigo-500 text-white text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full shadow">
+                    Хит продаж
+                </span>
+                <div>
+                    <h3 class="text-lg font-black text-white">Бизнес</h3>
+                    <p class="text-xs text-slate-400 mt-1">Для ресторанов, клиник и автосервисов</p>
+                    <div class="my-6">
+                        <span class="text-4xl font-black text-white">3 900 ₽</span>
+                        <span class="text-xs text-slate-400">/ месяц</span>
+                    </div>
+                    <ul class="space-y-3 text-xs text-slate-200 font-medium">
+                        <li class="flex items-center gap-2"><span class="text-emerald-400">✔</span> До 40 столиков / рабочих мест</li>
+                        <li class="flex items-center gap-2"><span class="text-emerald-400">✔</span> Массовая печать А4 для типографии</li>
+                        <li class="flex items-center gap-2"><span class="text-emerald-400">✔</span> До 5 управляющих в Telegram</li>
+                        <li class="flex items-center gap-2"><span class="text-emerald-400">✔</span> Кнопки звонка и WhatsApp клиенту</li>
+                        <li class="flex items-center gap-2"><span class="text-emerald-400">✔</span> Поддержка 2ГИС и Яндекс.Карт</li>
+                    </ul>
+                </div>
+                <a href="/new" class="mt-8 block w-full text-center gradient-brand hover:opacity-95 text-white font-bold text-xs py-3.5 rounded-xl shadow-lg transition">
+                    Подключить Бизнес ➔
+                </a>
+            </div>
+
+            <!-- Тариф 3: Сеть -->
+            <div class="bg-slate-900/60 border border-slate-800 p-8 rounded-3xl flex flex-col justify-between">
+                <div>
+                    <h3 class="text-lg font-black text-white">Сеть</h3>
+                    <p class="text-xs text-slate-400 mt-1">Для франшиз и сетей от 3 локаций</p>
+                    <div class="my-6">
+                        <span class="text-4xl font-black text-white">от 7 900 ₽</span>
+                        <span class="text-xs text-slate-400">/ месяц</span>
+                    </div>
+                    <ul class="space-y-3 text-xs text-slate-300 font-medium">
+                        <li class="flex items-center gap-2"><span class="text-emerald-400">✔</span> Неограниченно точек и столов</li>
+                        <li class="flex items-center gap-2"><span class="text-emerald-400">✔</span> Единый сводный дашборд сети</li>
+                        <li class="flex items-center gap-2"><span class="text-emerald-400">✔</span> Персональный менеджер и SLA</li>
+                        <li class="flex items-center gap-2"><span class="text-emerald-400">✔</span> Оплата по безналичному расчету</li>
+                    </ul>
+                </div>
+                <a href="/new" class="mt-8 block w-full text-center bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs py-3 rounded-xl transition">
+                    Индивидуальный расчет
+                </a>
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Футер -->
+    <footer class="relative z-10 border-t border-slate-800 py-12 px-4 sm:px-6 lg:px-8 text-center text-xs text-slate-500">
+        <div class="max-w-5xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+                <span class="font-black text-white text-base">GeoPulse</span>
+                <span>— платформа защиты репутации и сбора 5★ отзывов</span>
+            </div>
+            <p>© 2026 GeoPulse. Все права защищены.</p>
+        </div>
+    </footer>
+
+    <script>
+        function updateROI() {
+            const guests = parseInt(document.getElementById('guests-slider').value);
+            const check = parseInt(document.getElementById('check-slider').value);
+
+            document.getElementById('guests-val').innerText = guests + " чел.";
+            document.getElementById('check-val').innerText = check.toLocaleString('ru-RU') + " ₽";
+
+            // Расчет потерь: ~15% от месячного оборота из-за оттока с карт
+            const monthlyRevenue = guests * check * 30;
+            const lostRevenue = Math.round(monthlyRevenue * 0.15);
+
+            document.getElementById('loss-val').innerText = lostRevenue.toLocaleString('ru-RU') + " ₽";
+        }
+    </script>
+
+</body>
+</html>
