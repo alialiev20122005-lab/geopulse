@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Дашборд — {{ business.name }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="bg-slate-50 text-slate-900 min-h-screen p-4 sm:p-8">
+    <div class="max-w-4xl mx-auto">
+        
+        <!-- Верхняя шапка -->
+        <header class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-6 border-b border-slate-200">
+            <div>
+                <a href="/" class="text-xs font-semibold text-slate-400 hover:text-slate-600 mb-1 inline-block">← Все заведения</a>
+                <h1 class="text-2xl font-extrabold text-slate-900">{{ business.name }}</h1>
+                <p class="text-xs text-slate-500 mt-0.5">{{ business.category }} • {{ business.address }}</p>
+            </div>
+            <div class="flex items-center gap-2">
+                <a href="/print/{{ business.id }}" target="_blank" class="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-semibold px-4 py-2.5 rounded-xl transition shadow-sm">
+                    Печать QR 🖨️
+                </a>
+                <a href="/r/{{ business.id }}" target="_blank" class="bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition shadow-sm">
+                    Экран гостя ↗
+                </a>
+            </div>
+        </header>
+
+        <!-- Метрики / KPI карточки -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
+            
+            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Всего оценок</p>
+                <p class="text-3xl font-extrabold text-slate-900 mt-1">{{ stats.total_count or 0 }}</p>
+                <p class="text-[11px] text-slate-400 mt-1">Клиентских касаний</p>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm">
+                <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Средний балл</p>
+                <div class="flex items-baseline gap-1 mt-1">
+                    <p class="text-3xl font-extrabold text-amber-500">{{ "%.1f"|format(stats.avg_rating or 5.0) }}</p>
+                    <span class="text-xs text-slate-400">/ 5.0</span>
+                </div>
+                <p class="text-[11px] text-slate-400 mt-1">Внутренняя оценка</p>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-rose-100 shadow-sm bg-gradient-to-br from-white to-rose-50/30">
+                <p class="text-xs font-semibold text-rose-500 uppercase tracking-wider">Перехвачено</p>
+                <p class="text-3xl font-extrabold text-rose-600 mt-1">{{ stats.negative_count or 0 }}</p>
+                <p class="text-[11px] text-rose-500 font-medium mt-1">Спасено от Карт 🛡️</p>
+            </div>
+
+            <div class="bg-white p-5 rounded-2xl border border-emerald-100 shadow-sm bg-gradient-to-br from-white to-emerald-50/30">
+                <p class="text-xs font-semibold text-emerald-600 uppercase tracking-wider">Позитив (4-5★)</p>
+                <p class="text-3xl font-extrabold text-emerald-600 mt-1">{{ stats.positive_count or 0 }}</p>
+                <p class="text-[11px] text-emerald-600 mt-1">Направлено на Карты</p>
+            </div>
+
+        </div>
+
+        <!-- Подключенные Telegram-управляющие -->
+        <div class="bg-amber-50/80 border border-amber-200/70 rounded-2xl p-4 mb-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+            <div class="flex items-center gap-3">
+                <div class="w-8 h-8 rounded-xl bg-amber-500 text-white flex items-center justify-center flex-shrink-0">
+                    <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 00-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.52 2.77-1.18 3.35-1.39 3.73-1.39.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z"/></svg>
+                </div>
+                <div>
+                    <p class="font-bold text-amber-900">Уведомления в Telegram</p>
+                    <p class="text-amber-800/80">Привязано получателей: <b>{{ owner_count }}</b>. Каждая жалоба моментально дублируется им в личные сообщения.</p>
+                </div>
+            </div>
+            <a href="{{ telegram_deep_link }}" target="_blank" class="bg-amber-600 hover:bg-amber-700 text-white font-semibold px-3 py-1.5 rounded-lg text-xs transition flex-shrink-0">
+                + Добавить менеджера
+            </a>
+        </div>
+
+        <!-- Таблица последних отзывов и перехваченного негатива -->
+        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm overflow-hidden">
+            <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+                <h2 class="font-bold text-slate-900 text-sm">Журнал обращений клиентов</h2>
+                <span class="text-xs text-slate-400">Показаны последние 20 записей</span>
+            </div>
+
+            {% if feedbacks %}
+            <div class="divide-y divide-slate-100">
+                {% for f in feedbacks %}
+                <div class="p-5 hover:bg-slate-50/50 transition">
+                    <div class="flex items-start justify-between gap-4 mb-2">
+                        <div class="flex items-center gap-2">
+                            <span class="inline-flex items-center font-bold text-xs px-2.5 py-1 rounded-lg {% if f.rating <= 3 %}bg-rose-100 text-rose-700{% else %}bg-emerald-100 text-emerald-700{% endif %}">
+                                {{ f.rating }} ★
+                            </span>
+                            {% if f.table_number %}
+                            <span class="text-xs text-slate-500 bg-slate-100 px-2 py-0.5 rounded">Стол {{ f.table_number }}</span>
+                            {% endif %}
+                            <span class="text-xs text-slate-400">{{ f.created_at }}</span>
+                        </div>
+                        {% if f.contact %}
+                        <a href="tel:{{ f.contact }}" class="text-xs font-semibold text-sky-600 hover:underline">
+                            📞 {{ f.contact }}
+                        </a>
+                        {% endif %}
+                    </div>
+                    {% if f.comment %}
+                    <p class="text-sm text-slate-700 bg-slate-50 p-3 rounded-xl border border-slate-100 italic">
+                        «{{ f.comment }}»
+                    </p>
+                    {% else %}
+                    <p class="text-xs text-slate-400 italic">Оценка без комментария</p>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="py-12 text-center text-slate-400 text-xs">
+                Пока нет отзывов. Распечатайте тейбл-тент и разместите его на столах!
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+</body>
+</html>

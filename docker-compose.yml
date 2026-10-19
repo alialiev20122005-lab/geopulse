@@ -1,0 +1,32 @@
+services:
+  web:
+    build: .
+    container_name: geopulse_app
+    restart: always
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./geopulse.db:/app/geopulse.db
+      - ./feedbacks.jsonl:/app/feedbacks.jsonl
+
+  # Автоматический HTTPS реверс-прокси (Caddy)
+  # Выпускает бесплатный Let's Encrypt SSL сертификат на любой домен без ручных настроек
+  caddy:
+    image: caddy:2-alpine
+    container_name: geopulse_caddy
+    restart: always
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - web
+
+volumes:
+  caddy_data:
+  caddy_config:

@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+cloudflared.exe
+.env
+.venv/
+env/
+scratch/
