@@ -3,7 +3,12 @@ from datetime import datetime
 from typing import Dict, Any, List, Optional
 import os
 
-DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "geopulse.db")
+# В Amvera постоянное хранилище подключается в папку /data.
+# Если папка существует, база сохраняется навсегда между перезапусками контейнера.
+if os.path.exists("/data") and os.path.isdir("/data"):
+    DB_PATH = "/data/geopulse.db"
+else:
+    DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "geopulse.db")
 
 def get_connection():
     conn = sqlite3.connect(DB_PATH)
