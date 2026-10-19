@@ -3,13 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Тейбл-тент (The Monolith) — {{ business.name }}</title>
+    <title>Тейбл-тент — {{ business.name }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; }
+        body { 
+            font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+        }
         @media print {
             .no-print { display: none !important; }
             body { 
@@ -19,96 +21,111 @@
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
-            .card-monolith {
+            .print-card {
                 box-shadow: none !important;
-                border: 1px solid #18181b !important;
+                border: 1px solid #e2e8f0 !important;
                 margin: 0 auto !important;
                 page-break-inside: avoid !important;
             }
         }
+        .gradient-border {
+            background: linear-gradient(135deg, #6366f1 0%, #ec4899 50%, #f59e0b 100%);
+        }
+        .gradient-text {
+            background: linear-gradient(135deg, #4f46e5 0%, #d946ef 50%, #f43f5e 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .gradient-header {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #db2777 100%);
+        }
     </style>
 </head>
-<body class="bg-zinc-100 min-h-screen p-6 sm:p-10 flex flex-col items-center justify-center">
+<body class="bg-slate-100 min-h-screen p-4 sm:p-8 flex flex-col items-center justify-center">
 
-    <!-- Верхняя панель управления (скрывается при печати) -->
-    <div class="no-print mb-8 flex flex-wrap items-center justify-center gap-3">
-        <button onclick="window.print()" class="bg-zinc-950 hover:bg-zinc-800 text-white font-bold py-3 px-6 rounded-2xl shadow-xl shadow-zinc-950/20 flex items-center gap-2.5 text-sm transition active:scale-[0.98]">
+    <!-- Панель управления (скрыта при печати) -->
+    <div class="no-print mb-6 flex flex-wrap items-center justify-center gap-3">
+        <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-2xl shadow-lg shadow-indigo-600/25 flex items-center gap-2.5 text-sm transition active:scale-[0.98]">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
             Распечатать карточку (Ctrl + P)
         </button>
-        <a href="/r/{{ business_id }}{% if table_number %}?table={{ table_number }}{% endif %}" target="_blank" class="bg-white hover:bg-zinc-50 border border-zinc-200 text-zinc-800 font-semibold py-3 px-5 rounded-2xl text-sm transition shadow-sm flex items-center gap-2">
+        <a href="/r/{{ business_id }}{% if table_number %}?table={{ table_number }}{% endif %}" target="_blank" class="bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-semibold py-3 px-5 rounded-2xl text-sm transition shadow-sm flex items-center gap-2">
             Открыть экран гостя ↗
         </a>
     </div>
 
-    <!-- Тейбл-тент: Концепция 1 «The Monolith» (Minimal Premium) -->
-    <div class="card-monolith bg-white w-full max-w-[340px] rounded-[32px] overflow-hidden shadow-2xl shadow-zinc-900/15 border border-zinc-200/90 flex flex-col transition-all">
+    <!-- Красочная, дружелюбная карточка с QR-кодом -->
+    <div class="print-card bg-white w-full max-w-[350px] rounded-[36px] overflow-hidden shadow-2xl shadow-indigo-500/10 border border-slate-100 flex flex-col text-center">
         
-        <!-- Верхний графитовый монолитный блок -->
-        <header class="bg-[#09090b] text-white p-7 text-center relative">
+        <!-- Яркая шапка с градиентом -->
+        <header class="gradient-header text-white pt-8 pb-7 px-6 relative flex flex-col items-center">
             
-            <!-- Индикатор прямой связи -->
-            <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-zinc-900 border border-zinc-800/80 mb-3 shadow-inner">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span class="text-[10px] font-bold uppercase tracking-widest text-zinc-300">Прямая связь с руководством</span>
+            <!-- Дружелюбный бейдж -->
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-white text-xs font-bold mb-3 shadow-sm border border-white/25">
+                <span>✨</span>
+                <span>Обратная связь</span>
             </div>
 
             <!-- Название заведения -->
-            <h1 class="text-2xl font-black tracking-tight text-white uppercase mb-1">
+            <h1 class="text-2xl font-black tracking-tight text-white mb-1">
                 {{ business.name }}
             </h1>
 
-            <!-- Номер столика / локация -->
             {% if table_number %}
-            <div class="inline-block mt-2 px-3.5 py-1 rounded-full bg-white text-zinc-950 text-xs font-black uppercase tracking-wider shadow-sm">
+            <!-- Номер столика -->
+            <div class="mt-2 px-3.5 py-1 rounded-full bg-white text-indigo-700 text-xs font-black uppercase tracking-wider shadow-sm">
                 Столик №{{ table_number }}
             </div>
             {% else %}
-            <p class="text-xs text-zinc-400 tracking-wide font-medium">Контроль сервиса и качества</p>
+            <!-- Адрес / подзаголовок -->
+            <p class="text-xs text-white/80 font-medium tracking-wide">
+                {{ business.address }}
+            </p>
             {% endif %}
 
+            <!-- Декоративные волны/звездочки -->
+            <div class="flex items-center gap-1 mt-3 text-amber-300 text-sm">
+                <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+            </div>
         </header>
 
-        <!-- Нижний белоснежный блок с видоискателем и QR-кодом -->
-        <main class="p-8 flex flex-col items-center text-center bg-white">
+        <!-- Основная часть с красочной рамкой QR-кода -->
+        <main class="p-7 flex flex-col items-center bg-white">
             
-            <!-- Видоискатель камеры с QR-кодом в фокусе -->
-            <div class="relative p-3 bg-white mb-6">
-                <!-- Оптические угловые маркеры (видоискатель) -->
-                <span class="absolute top-0 left-0 w-4 h-4 border-t-2 border-l-2 border-zinc-900 rounded-tl-sm pointer-events-none"></span>
-                <span class="absolute top-0 right-0 w-4 h-4 border-t-2 border-r-2 border-zinc-900 rounded-tr-sm pointer-events-none"></span>
-                <span class="absolute bottom-0 left-0 w-4 h-4 border-b-2 border-l-2 border-zinc-900 rounded-bl-sm pointer-events-none"></span>
-                <span class="absolute bottom-0 right-0 w-4 h-4 border-b-2 border-r-2 border-zinc-900 rounded-br-sm pointer-events-none"></span>
-
-                <!-- QR-код со скругленными микро-точками -->
-                <img 
-                    src="/api/qr/{{ business_id }}{% if table_number %}?table={{ table_number }}{% endif %}" 
-                    alt="QR Code" 
-                    class="w-52 h-52 object-contain rounded-xl select-none"
-                    loading="eager"
-                >
+            <!-- Красочный QR-код с сочным радужным градиентом -->
+            <div class="relative p-[5px] rounded-[28px] gradient-border shadow-xl shadow-pink-500/15 mb-6 group transition-transform">
+                <div class="bg-white p-3.5 rounded-[24px] flex items-center justify-center">
+                    <img 
+                        src="/api/qr/{{ business_id }}{% if table_number %}?table={{ table_number }}{% endif %}" 
+                        alt="QR-код для отзыва" 
+                        class="w-52 h-52 object-contain select-none rounded-xl"
+                        loading="eager"
+                    >
+                </div>
             </div>
 
-            <!-- Призыв к действию (CTA) -->
-            <div class="space-y-2 mb-6 w-full">
-                <span class="inline-block text-[11px] font-black uppercase tracking-widest text-zinc-400">
-                    Наведите камеру смартфона
+            <!-- Понятное, простое и теплое объяснение -->
+            <div class="space-y-1.5 mb-5 w-full">
+                <h2 class="text-lg font-black text-slate-900 tracking-tight">
+                    Как вам у нас?
+                </h2>
+                <p class="text-xs font-medium text-slate-500 leading-relaxed max-w-[270px] mx-auto">
+                    Наведите камеру смартфона на QR-код, чтобы поставить оценку или поделиться впечатлениями ❤️
+                </p>
+            </div>
+
+            <!-- Подсказка: быстро и просто -->
+            <div class="inline-flex items-center gap-3 px-4 py-2 rounded-2xl bg-slate-50 border border-slate-100 text-slate-600 text-[11px] font-semibold">
+                <span class="flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    30 секунд
                 </span>
-                <p class="text-sm font-bold text-zinc-950 leading-snug">
-                    Есть замечания? Напишите директору
-                </p>
-                <p class="text-xs font-medium text-zinc-500">
-                    Довольны сервисом? Оцените на картах
-                </p>
+                <span class="w-1 h-1 rounded-full bg-slate-300"></span>
+                <span class="flex items-center gap-1">
+                    <svg class="w-3.5 h-3.5 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 13a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    Без приложений
+                </span>
             </div>
-
-            <!-- Микро-футер доверия -->
-            <footer class="pt-4 border-t border-zinc-100 w-full flex items-center justify-center gap-1.5 text-[10px] font-semibold text-zinc-400 uppercase tracking-wider">
-                <svg class="w-3 h-3 text-zinc-400 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                    <path fill-rule="evenodd" d="M10 1.944A11.954 11.954 0 012.166 5C2.056 5.649 2 6.319 2 7c0 5.225 3.34 9.67 8 11.317C14.66 16.67 18 12.225 18 7c0-.682-.057-1.35-.166-2.001A11.954 11.954 0 0110 1.944zM11 14a1 1 0 11-2 0 1 1 0 012 0zm0-7a1 1 0 10-2 0v3a1 1 0 102 0V7z" clip-rule="evenodd"/>
-                </svg>
-                <span>GeoPulse Verified Feedback</span>
-            </footer>
 
         </main>
 
