@@ -81,20 +81,31 @@ async def home(request: Request):
         }
     )
 
-@app.get("/new", response_class=HTMLResponse)
+from app.admin import is_admin
+
+@app.get("/new", response_class=RedirectResponse)
 async def new_business_page(request: Request):
-    """Форма добавления нового заведения."""
-    return templates.TemplateResponse(request=request, name="new_business.html", context={})
+    """Публичный доступ закрыт: клиенты направляются на заявку, администратор — в панель."""
+    if is_admin(request):
+        return RedirectResponse(url="/admin/businesses", status_code=303)
+    return RedirectResponse(url="/#connect", status_code=303)
 
 @app.post("/new")
 async def handle_new_business(
+    request: Request,
     name: str = Form(...),
     category: str = Form(...),
     id: str = Form(...),
     address: str = Form(...),
     yandex_maps_url: str = Form(...)
 ):
-    """Обработка создания заведения."""
+    """Создание заведений доступно только авторизованному администратору платформы."""
+    if not is_admin(request):
+        raise HTTPException(
+            status_code=403, 
+            detail="Прямое добавление заведений ограничено. Пожалуйста, оставьте заявку на подключение на главной странице."
+        )
+
     business_id = id.lower().strip()
     
     if not re.fullmatch(r"[a-z0-9_-]{2,30}", business_id):

@@ -144,8 +144,38 @@ async def run_tests():
         assert "/admin/leads" in resp.headers.get("location", "")
         print("  -> Deprecated public /leads safely redirects to /admin/leads (no PII leakage)!")
 
-        # 8. Print Layout Bulk Sheets
-        print("\n[TEST 8] Verifying bulk print layout pagination...")
+        # 8. Protection of /new against unauthorized business creation
+        print("\n[TEST 8] Verifying /new protection (No unauthorized business creation)...")
+        # Clear cookies to simulate unauthenticated guest
+        client.cookies.clear()
+
+        # Unauthorized GET /new -> redirects to /#connect
+        resp = await client.get("/new", follow_redirects=False)
+        assert resp.status_code in (302, 303, 307)
+        assert "#connect" in resp.headers.get("location", "")
+        print("  -> Unauthorized GET /new safely redirects to /#connect lead form!")
+
+        # Unauthorized POST /new -> 403 Forbidden
+        fake_biz_data = {
+            "name": "Фейк Кафе",
+            "category": "Кафе",
+            "id": "fake_cafe",
+            "address": "ул. Тестовая",
+            "yandex_maps_url": "https://maps.yandex.ru"
+        }
+        resp = await client.post("/new", data=fake_biz_data, follow_redirects=False)
+        assert resp.status_code == 403
+        print("  -> Unauthorized POST /new rejected with 403 Forbidden!")
+
+        # Authenticated Admin GET /new -> redirects to /admin/businesses
+        client.cookies.set("geopulse_admin_session", admin_cookie)
+        resp = await client.get("/new", follow_redirects=False)
+        assert resp.status_code in (302, 303, 307)
+        assert "/admin/businesses" in resp.headers.get("location", "")
+        print("  -> Authenticated Admin GET /new redirects to /admin/businesses!")
+
+        # 9. Print Layout Bulk Sheets
+        print("\n[TEST 9] Verifying bulk print layout pagination...")
         resp = await client.get("/print/zerno/all?tables=6")
         assert resp.status_code == 200
         assert "print-sheet" in resp.text
