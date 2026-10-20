@@ -81,9 +81,15 @@
                                 📱 QR
                             </a>
                             <!-- Редактировать -->
-                            <button onclick="openEditModal('{{ b.id }}', '{{ b.name | replace('\'', '\\\'') }}', '{{ b.category }}', '{{ b.address | replace('\'', '\\\'') }}', '{{ b.yandex_maps_url }}', '{{ b.two_gis_url }}', '{{ b.status }}')" class="bg-slate-800 hover:bg-slate-700 text-white text-xs px-2.5 py-1.5 rounded-lg transition">
+                            <button onclick="openEditModal('{{ b.id }}', '{{ b.name | replace('\'', '\\\'') }}', '{{ b.category }}', '{{ b.address | replace('\'', '\\\'') }}', '{{ b.yandex_maps_url }}', '{{ b.two_gis_url }}', '{{ b.status }}')" class="bg-slate-800 hover:bg-slate-700 text-white text-xs px-2.5 py-1.5 rounded-lg transition" title="Редактировать">
                                 ✏️
                             </button>
+                            <!-- Удалить заведение -->
+                            <form action="/admin/businesses/{{ b.id }}/delete" method="POST" onsubmit="return confirm('Вы действительно хотите безвозвратно удалить заведение «{{ b.name | replace('\'', '\\\'') }}»?\n\nВсе отзывы и привязанные менеджеры этой точки также будут удалены!');" class="inline">
+                                <button type="submit" title="Удалить заведение" class="bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-800/60 text-xs px-2.5 py-1.5 rounded-lg transition">
+                                    🗑️
+                                </button>
+                            </form>
                         </div>
                     </td>
                 </tr>
@@ -203,19 +209,29 @@
             </div>
 
             <div class="pt-4 flex items-center justify-between border-t border-slate-800">
-                <button type="button" onclick="closeEditModal()" class="text-xs font-bold text-slate-400 hover:text-white px-4 py-2 rounded-xl">
-                    Отмена
+                <button type="button" onclick="deleteCurrentBusiness()" class="text-xs font-bold text-rose-400 hover:text-rose-300 bg-rose-950/30 hover:bg-rose-950/60 border border-rose-800/50 px-3.5 py-2 rounded-xl transition">
+                    🗑️ Удалить точку
                 </button>
-                <button type="submit" class="gradient-brand text-white font-bold text-xs py-2.5 px-6 rounded-xl shadow-lg transition">
-                    Сохранить изменения
-                </button>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="closeEditModal()" class="text-xs font-bold text-slate-400 hover:text-white px-4 py-2 rounded-xl">
+                        Отмена
+                    </button>
+                    <button type="submit" class="gradient-brand text-white font-bold text-xs py-2.5 px-6 rounded-xl shadow-lg transition">
+                        Сохранить изменения
+                    </button>
+                </div>
             </div>
         </form>
     </div>
 </div>
 
 <script>
+    let activeEditBusinessId = '';
+    let activeEditBusinessName = '';
+
     function openEditModal(id, name, category, address, yandex, twoGis, status) {
+        activeEditBusinessId = id;
+        activeEditBusinessName = name;
         document.getElementById('editForm').action = '/admin/businesses/' + id + '/update';
         document.getElementById('edit_name').value = name;
         document.getElementById('edit_category').value = category;
@@ -228,6 +244,17 @@
 
     function closeEditModal() {
         document.getElementById('editModal').classList.add('hidden');
+    }
+
+    function deleteCurrentBusiness() {
+        if (!activeEditBusinessId) return;
+        if (confirm('Вы уверены, что хотите безвозвратно удалить заведение «' + activeEditBusinessName + '»?\n\nВсе связанные отзывы и привязанные Telegram-менеджеры этой точки также будут удалены!')) {
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '/admin/businesses/' + activeEditBusinessId + '/delete';
+            document.body.appendChild(form);
+            form.submit();
+        }
     }
 </script>
 {% endblock %}

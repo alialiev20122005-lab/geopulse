@@ -148,6 +148,7 @@ async def admin_businesses_page(request: Request):
 
 @router.post("/businesses/create")
 async def admin_create_business(
+    request: Request,
     id: str = Form(...),
     name: str = Form(...),
     category: str = Form(...),
@@ -157,6 +158,9 @@ async def admin_create_business(
     status: Optional[str] = Form("pilot")
 ):
     """Создание нового заведения из панели администратора."""
+    if not is_admin(request):
+        return RedirectResponse(url="/admin/login", status_code=303)
+
     business_id = id.lower().strip()
     if get_business(business_id):
         return RedirectResponse(url="/admin/businesses?err=Заведение+с+таким+ID+уже+существует", status_code=303)
@@ -182,6 +186,7 @@ async def admin_create_business(
 
 @router.post("/businesses/{business_id}/update")
 async def admin_update_business(
+    request: Request,
     business_id: str,
     name: str = Form(...),
     category: str = Form(...),
@@ -191,6 +196,9 @@ async def admin_update_business(
     status: Optional[str] = Form("pilot")
 ):
     """Обновление параметров заведения."""
+    if not is_admin(request):
+        return RedirectResponse(url="/admin/login", status_code=303)
+
     current = get_business(business_id)
     if not current:
         return RedirectResponse(url="/admin/businesses?err=Заведение+не+найдено", status_code=303)
@@ -210,10 +218,19 @@ async def admin_update_business(
     return RedirectResponse(url="/admin/businesses?msg=Параметры+заведения+успешно+обновлены", status_code=303)
 
 @router.post("/businesses/{business_id}/delete")
-async def admin_delete_business(business_id: str):
-    """Удаление заведения."""
+async def admin_delete_business(request: Request, business_id: str):
+    """Удаление заведения и всех связанных данных."""
+    if not is_admin(request):
+        return RedirectResponse(url="/admin/login", status_code=303)
+
+    import urllib.parse
+    current = get_business(business_id)
+    name = current["name"] if current else business_id
+
     delete_business(business_id)
-    return RedirectResponse(url="/admin/businesses?msg=Заведение+удалено", status_code=303)
+    logger.info(f"🗑️ Заведение удалено администратором: {business_id} ({name})")
+    encoded_msg = urllib.parse.quote(f"Заведение «{name}» и связанные отзывы успешно удалены")
+    return RedirectResponse(url=f"/admin/businesses?msg={encoded_msg}", status_code=303)
 
 # --- 4. CRM заявок на 14-дневный пилот ---
 
