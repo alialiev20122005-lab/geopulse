@@ -11,8 +11,10 @@ else:
     DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "geopulse.db")
 
 def get_connection():
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=30.0)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA journal_mode = WAL;")
+    conn.execute("PRAGMA foreign_keys = ON;")
     return conn
 
 def init_db():
@@ -162,12 +164,25 @@ def get_all_businesses() -> List[Dict[str, Any]]:
 def create_business(data: Dict[str, Any]) -> str:
     with get_connection() as conn:
         cursor = conn.cursor()
+        data_with_status = {**data, "status": data.get("status", "pilot")}
         cursor.execute("""
-        INSERT INTO businesses (id, name, category, address, yandex_maps_url, two_gis_url, welcome_text, negative_cta, positive_cta)
-        VALUES (:id, :name, :category, :address, :yandex_maps_url, :two_gis_url, :welcome_text, :negative_cta, :positive_cta);
-        """, data)
+        INSERT INTO businesses (id, name, category, address, yandex_maps_url, two_gis_url, welcome_text, negative_cta, positive_cta, status)
+        VALUES (:id, :name, :category, :address, :yandex_maps_url, :two_gis_url, :welcome_text, :negative_cta, :positive_cta, :status);
+        """, data_with_status)
         conn.commit()
         return data["id"]
+
+def get_businesses_by_chat_id(telegram_chat_id: str) -> List[Dict[str, Any]]:
+    """Получение заведений, привязанных к конкретному Telegram-пользователю."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+        SELECT b.* FROM businesses b
+        JOIN business_owners bo ON b.id = bo.business_id
+        WHERE bo.telegram_chat_id = ?
+        ORDER BY b.created_at DESC;
+        """, (str(telegram_chat_id).strip(),))
+        return [dict(r) for r in cursor.fetchall()]
 
 def link_telegram_owner(business_id: str, telegram_chat_id: str) -> bool:
     with get_connection() as conn:

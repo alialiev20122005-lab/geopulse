@@ -57,15 +57,27 @@
                 </a>
             </nav>
 
-            <div class="flex items-center gap-3">
+            <div class="flex items-center gap-2 sm:gap-3">
                 <a href="/pitch#pilot-form" class="hidden sm:inline-flex text-xs font-bold text-slate-300 hover:text-white px-3.5 py-2.5 rounded-xl border border-slate-800 hover:border-slate-700 bg-slate-900/60 transition">
                     Пилот 14 дней 0 ₽
                 </a>
-                <a href="/new" class="gradient-brand hover:opacity-95 text-white font-bold text-xs py-2.5 px-5 rounded-xl shadow-lg shadow-pink-500/20 transition active:scale-95 flex items-center gap-1.5">
-                    <span>Подключить точку</span>
+                <a href="/new" class="gradient-brand hover:opacity-95 text-white font-bold text-xs py-2.5 px-3.5 sm:px-5 rounded-xl shadow-lg shadow-pink-500/20 transition active:scale-95 flex items-center gap-1.5">
+                    <span>Подключить</span>
                     <span>➔</span>
                 </a>
+                <button type="button" id="mobile-toggle" onclick="toggleMobileMenu()" class="md:hidden p-2 rounded-xl text-slate-300 hover:text-white bg-slate-900 border border-slate-800 focus:outline-none" aria-label="Открыть меню">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path></svg>
+                </button>
             </div>
+        </div>
+
+        <!-- Мобильное выпадающее меню -->
+        <div id="mobile-nav" class="hidden md:hidden bg-[#0b0f19]/95 backdrop-blur-2xl border-b border-slate-800 px-6 py-4 space-y-3">
+            <a href="#how-it-works" onclick="toggleMobileMenu()" class="block text-sm font-semibold text-slate-200 hover:text-white py-2 border-b border-slate-800/60">Как это работает</a>
+            <a href="#calculator" onclick="toggleMobileMenu()" class="block text-sm font-semibold text-slate-200 hover:text-white py-2 border-b border-slate-800/60">Калькулятор потерь</a>
+            <a href="#demo-points" onclick="toggleMobileMenu()" class="block text-sm font-semibold text-slate-200 hover:text-white py-2 border-b border-slate-800/60">Демо-точки</a>
+            <a href="#pricing" onclick="toggleMobileMenu()" class="block text-sm font-semibold text-slate-200 hover:text-white py-2 border-b border-slate-800/60">Тарифы</a>
+            <a href="/pitch" class="block text-sm font-bold text-indigo-400 py-2">Презентация КП (PDF) 📄</a>
         </div>
     </header>
 
@@ -374,6 +386,13 @@
             const lostRevenue = Math.round(monthlyRevenue * 0.15);
 
             document.getElementById('loss-val').innerText = lostRevenue.toLocaleString('ru-RU') + " ₽";
+        }
+
+        function toggleMobileMenu() {
+            const nav = document.getElementById('mobile-nav');
+            if (nav) {
+                nav.classList.toggle('hidden');
+            }
         }
     </script>
 

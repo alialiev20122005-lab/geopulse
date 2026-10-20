@@ -21,6 +21,10 @@
         }
 
         /* Оптимизация для печати и сохранения в PDF */
+        @page {
+            size: A4 portrait;
+            margin: 12mm;
+        }
         @media print {
             body {
                 background: #ffffff !important;
@@ -35,7 +39,8 @@
                 color: #0f172a !important;
                 box-shadow: none !important;
                 page-break-inside: avoid !important;
-                margin-bottom: 2rem !important;
+                break-inside: avoid !important;
+                margin-bottom: 1.5rem !important;
             }
             .print-text-dark {
                 color: #0f172a !important;
@@ -46,7 +51,8 @@
                 color: #475569 !important;
             }
             .page-break {
-                page-break-before: always;
+                page-break-before: always !important;
+                break-before: page !important;
             }
         }
     </style>
@@ -180,7 +186,7 @@
         </section>
 
         <!-- СЛАЙД 3: В ЧЕМ ПАРАДОКС ГОСТЕЙ -->
-        <section class="print-card bg-slate-900/70 border border-slate-800/90 rounded-3xl p-6 sm:p-10 mb-10 shadow-2xl backdrop-blur-md">
+        <section class="page-break print-card bg-slate-900/70 border border-slate-800/90 rounded-3xl p-6 sm:p-10 mb-10 shadow-2xl backdrop-blur-md">
             <div class="flex items-center gap-2 mb-3 text-indigo-400 font-bold text-xs uppercase tracking-wider">
                 <span>🔍 Анатомия проблемы</span>
             </div>
@@ -300,7 +306,7 @@
         </section>
 
         <!-- СЛАЙД 5: ТАБЛИЦА СРАВНЕНИЯ -->
-        <section class="print-card bg-slate-900/70 border border-slate-800/90 rounded-3xl p-6 sm:p-10 mb-10 shadow-2xl backdrop-blur-md overflow-x-auto">
+        <section class="page-break print-card bg-slate-900/70 border border-slate-800/90 rounded-3xl p-6 sm:p-10 mb-10 shadow-2xl backdrop-blur-md overflow-x-auto">
             <div class="flex items-center gap-2 mb-3 text-amber-400 font-bold text-xs uppercase tracking-wider">
                 <span>📊 Сравнение</span>
             </div>
@@ -385,7 +391,7 @@
         </section>
 
         <!-- СЛАЙД 7: ТАРИФЫ -->
-        <section class="print-card bg-slate-900/70 border border-slate-800/90 rounded-3xl p-6 sm:p-10 mb-10 shadow-2xl backdrop-blur-md">
+        <section class="page-break print-card bg-slate-900/70 border border-slate-800/90 rounded-3xl p-6 sm:p-10 mb-10 shadow-2xl backdrop-blur-md">
             <div class="flex items-center gap-2 mb-3 text-pink-400 font-bold text-xs uppercase tracking-wider">
                 <span>💰 Прозрачная стоимость</span>
             </div>

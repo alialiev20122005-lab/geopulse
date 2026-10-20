@@ -1,5 +1,7 @@
 import hashlib
 import logging
+import re
+import secrets
 from typing import Optional
 from fastapi import APIRouter, Request, Form, HTTPException, Depends
 from fastapi.responses import HTMLResponse, RedirectResponse
@@ -40,9 +42,11 @@ def get_auth_token() -> str:
     return hashlib.sha256(raw).hexdigest()
 
 def is_admin(request: Request) -> bool:
-    """Проверка наличия валидной сессии администратора."""
+    """Проверка наличия валидной сессии администратора с защитой от тайминг-атак."""
     cookie_token = request.cookies.get(COOKIE_NAME)
-    return cookie_token == get_auth_token()
+    if not cookie_token:
+        return False
+    return secrets.compare_digest(cookie_token, get_auth_token())
 
 def require_admin(request: Request):
     """FastAPI Dependency для проверки прав доступа к админке."""
@@ -68,8 +72,10 @@ async def handle_login(
     username: str = Form(...),
     password: str = Form(...)
 ):
-    """Обработка попытки входа."""
-    if username.strip() == ADMIN_USERNAME and password == ADMIN_PASSWORD:
+    """Обработка попытки входа с защитой от тайминг-атак."""
+    valid_user = secrets.compare_digest(username.strip(), ADMIN_USERNAME)
+    valid_pass = secrets.compare_digest(password, ADMIN_PASSWORD)
+    if valid_user and valid_pass:
         response = RedirectResponse(url="/admin", status_code=303)
         # Устанавливаем защищенную куку сессии на 7 дней
         response.set_cookie(
@@ -162,6 +168,11 @@ async def admin_create_business(
         return RedirectResponse(url="/admin/login", status_code=303)
 
     business_id = id.lower().strip()
+    if not re.fullmatch(r"[a-z0-9_-]{2,30}", business_id):
+        return RedirectResponse(
+            url="/admin/businesses?err=ID+должен+содержать+от+2+до+30+латинских+букв,+цифр+или+дефисов",
+            status_code=303
+        )
     if get_business(business_id):
         return RedirectResponse(url="/admin/businesses?err=Заведение+с+таким+ID+уже+существует", status_code=303)
 
@@ -256,14 +267,18 @@ async def admin_leads_page(request: Request):
     )
 
 @router.post("/leads/{lead_id}/status")
-async def admin_update_lead_status(lead_id: int, status: str = Form(...)):
+async def admin_update_lead_status(request: Request, lead_id: int, status: str = Form(...)):
     """Изменение статуса заявки в воронке."""
+    if not is_admin(request):
+        return RedirectResponse(url="/admin/login", status_code=303)
     update_lead_status(lead_id, status)
     return RedirectResponse(url="/admin/leads?msg=Статус+заявки+обновлен", status_code=303)
 
 @router.post("/leads/{lead_id}/delete")
-async def admin_delete_lead(lead_id: int):
+async def admin_delete_lead(request: Request, lead_id: int):
     """Удаление лида из CRM."""
+    if not is_admin(request):
+        return RedirectResponse(url="/admin/login", status_code=303)
     delete_lead(lead_id)
     return RedirectResponse(url="/admin/leads?msg=Заявка+удалена", status_code=303)
 
@@ -323,7 +338,9 @@ async def admin_managers_page(request: Request):
     )
 
 @router.post("/managers/{record_id}/delete")
-async def admin_unlink_manager(record_id: int):
+async def admin_unlink_manager(request: Request, record_id: int):
     """Отвязка управляющего от заведения."""
+    if not is_admin(request):
+        return RedirectResponse(url="/admin/login", status_code=303)
     unlink_telegram_owner_by_id(record_id)
     return RedirectResponse(url="/admin/managers?msg=Менеджер+успешно+отвязан", status_code=303)

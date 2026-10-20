@@ -48,20 +48,24 @@ templates = Jinja2Templates(directory="app/templates")
 from app.admin import router as admin_router
 app.include_router(admin_router)
 
+import html
+import re
+from pydantic import BaseModel, Field
+
 class FeedbackPayload(BaseModel):
-    business_id: str
-    rating: int
-    comment: str
-    contact: Optional[str] = ""
-    table_number: Optional[str] = ""
+    business_id: str = Field(..., min_length=1, max_length=50)
+    rating: int = Field(..., ge=1, le=5)
+    comment: str = Field(..., min_length=1, max_length=2000)
+    contact: Optional[str] = Field("", max_length=100)
+    table_number: Optional[str] = Field("", max_length=30)
 
 class PilotRequestPayload(BaseModel):
-    name: str
-    phone: str
-    business_name: str
-    city: Optional[str] = ""
-    tables_count: Optional[str] = ""
-    source: Optional[str] = "web"
+    name: str = Field(..., min_length=1, max_length=100)
+    phone: str = Field(..., min_length=5, max_length=50)
+    business_name: str = Field(..., min_length=1, max_length=120)
+    city: Optional[str] = Field("", max_length=80)
+    tables_count: Optional[str] = Field("", max_length=30)
+    source: Optional[str] = Field("web", max_length=50)
 
 # --- Веб-роуты ---
 
@@ -92,6 +96,12 @@ async def handle_new_business(
 ):
     """Обработка создания заведения."""
     business_id = id.lower().strip()
+    
+    if not re.fullmatch(r"[a-z0-9_-]{2,30}", business_id):
+        raise HTTPException(
+            status_code=400,
+            detail="ID заведения должен содержать от 2 до 30 символов: только латинские буквы, цифры, дефис или подчеркивание"
+        )
     
     # Проверяем, существует ли уже такой ID
     if get_business(business_id):
@@ -216,7 +226,10 @@ async def generate_qr(business_id: str, request: Request, table: Optional[str] =
     from qrcode.image.styles.moduledrawers.pil import RoundedModuleDrawer
     from qrcode.image.styles.colormasks import HorizontalGradiantColorMask
 
-    base_url = str(request.base_url).rstrip("/")
+    # Поддержка корректного протокола HTTPS за reverse-proxy (Render, Amvera, Cloudflare)
+    scheme = request.headers.get("x-forwarded-proto", request.url.scheme)
+    host = request.headers.get("x-forwarded-host", request.url.netloc)
+    base_url = f"{scheme}://{host}".rstrip("/")
     target_url = f"{base_url}/r/{business_id}"
     if table:
         target_url += f"?table={table}"
@@ -245,7 +258,11 @@ async def generate_qr(business_id: str, request: Request, table: Optional[str] =
     img.save(buf, format="PNG")
     buf.seek(0)
 
-    return Response(content=buf.getvalue(), media_type="image/png")
+    return Response(
+        content=buf.getvalue(),
+        media_type="image/png",
+        headers={"Cache-Control": "public, max-age=86400, stale-while-revalidate=604800"}
+    )
 
 @app.post("/api/feedback")
 async def receive_feedback(payload: FeedbackPayload):
@@ -307,16 +324,23 @@ async def handle_pilot_request(payload: PilotRequestPayload):
 
     logger.info(f"🔥 НОВАЯ ЗАЯВКА НА ПИЛОТ #{lead_id}: {payload.business_name} ({payload.name}, {payload.phone})")
 
-    # 2. Формирование богатого уведомления для основателя/администратора
-    city_line = f"\n🏙 <b>Город:</b> {payload.city}" if payload.city else ""
-    tables_line = f"\n🪑 <b>Столиков/мастеров:</b> {payload.tables_count}" if payload.tables_count else ""
+    # 2. Формирование богатого уведомления для основателя/администратора с защитой от HTML Injection
+    safe_biz = html.escape(payload.business_name)
+    safe_name = html.escape(payload.name)
+    safe_phone = html.escape(payload.phone)
+    safe_city = html.escape(payload.city) if payload.city else ""
+    safe_tables = html.escape(payload.tables_count) if payload.tables_count else ""
+    safe_source = html.escape(payload.source or "pitch")
+
+    city_line = f"\n🏙 <b>Город:</b> {safe_city}" if safe_city else ""
+    tables_line = f"\n🪑 <b>Столиков/мастеров:</b> {safe_tables}" if safe_tables else ""
 
     text = (
         f"🔥 <b>НОВАЯ ЗАЯВКА НА 14-ДНЕВНЫЙ ПИЛОТ!</b>\n\n"
-        f"🏢 <b>Заведение:</b> {payload.business_name}\n"
-        f"👤 <b>Контакт:</b> {payload.name}\n"
-        f"📱 <b>Телефон:</b> {payload.phone}{city_line}{tables_line}\n"
-        f"🌐 <b>Источник:</b> {payload.source}\n"
+        f"🏢 <b>Заведение:</b> {safe_biz}\n"
+        f"👤 <b>Контакт:</b> {safe_name}\n"
+        f"📱 <b>Телефон:</b> {safe_phone}{city_line}{tables_line}\n"
+        f"🌐 <b>Источник:</b> {safe_source}\n"
         f"🕒 <b>Время:</b> {datetime.now().strftime('%d.%m.%Y %H:%M')}\n\n"
         f"────────────────────\n"
         f"💡 <i>Нажмите кнопку ниже, чтобы сразу открыть диалог в WhatsApp с готовым приветствием:</i>"
@@ -355,83 +379,8 @@ async def handle_pilot_request(payload: PilotRequestPayload):
         "message": "Заявка успешно принята! Мы свяжемся с вами в течение 15 минут."
     }
 
-@app.get("/leads", response_class=HTMLResponse)
-async def view_leads_page(request: Request):
-    """Список полученных заявок на пилот (для создателя)."""
-    leads = get_recent_leads(limit=50)
-    html_content = """
-    <!DOCTYPE html>
-    <html lang="ru">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>GeoPulse — Заявки на пилот</title>
-        <script src="https://cdn.tailwindcss.com"></script>
-    </head>
-    <body class="bg-slate-950 text-slate-100 p-6 sm:p-10 font-sans">
-        <div class="max-w-6xl mx-auto">
-            <div class="flex flex-wrap items-center justify-between gap-4 mb-8 pb-4 border-b border-slate-800">
-                <div>
-                    <h1 class="text-2xl font-black text-white">Входящие заявки на 14-дневный пилот</h1>
-                    <p class="text-sm text-slate-400">Лиды с сайта и коммерческого предложения</p>
-                </div>
-                <div class="flex items-center gap-3">
-                    <a href="/pitch" class="text-xs bg-slate-800 hover:bg-slate-700 text-white font-bold px-3 py-2 rounded-xl transition">Посмотреть КП (/pitch)</a>
-                    <a href="/" class="text-xs text-indigo-400 hover:underline">← На главную</a>
-                </div>
-            </div>
-            
-            <div class="bg-slate-900 border border-slate-800 rounded-2xl overflow-x-auto shadow-xl">
-                <table class="w-full text-left text-sm">
-                    <thead class="bg-slate-800/80 text-xs uppercase text-slate-400">
-                        <tr>
-                            <th class="py-3 px-4">ID</th>
-                            <th class="py-3 px-4">Дата / Время</th>
-                            <th class="py-3 px-4">Заведение</th>
-                            <th class="py-3 px-4">Контактное лицо</th>
-                            <th class="py-3 px-4">Телефон</th>
-                            <th class="py-3 px-4">Город / Столы</th>
-                            <th class="py-3 px-4">Действие</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-slate-800">
-    """
-    for l in leads:
-        phone_digits = "".join([c for c in l['phone'] if c.isdigit()])
-        if len(phone_digits) == 11 and phone_digits.startswith("8"):
-            phone_digits = "7" + phone_digits[1:]
-        elif len(phone_digits) == 10:
-            phone_digits = "7" + phone_digits
-
-        wa_url = f"https://wa.me/{phone_digits}" if len(phone_digits) >= 10 else "#"
-        html_content += f"""
-                        <tr class="hover:bg-slate-800/40 transition">
-                            <td class="py-3.5 px-4 text-slate-500 font-mono">#{l['id']}</td>
-                            <td class="py-3.5 px-4 text-xs text-slate-400">{l['created_at']}</td>
-                            <td class="py-3.5 px-4 font-bold text-white">{l['business_name']}</td>
-                            <td class="py-3.5 px-4">{l['name']}</td>
-                            <td class="py-3.5 px-4 font-mono text-xs text-indigo-300">{l['phone']}</td>
-                            <td class="py-3.5 px-4 text-xs text-slate-400">{l['city']} ({l['tables_count']} шт.)</td>
-                            <td class="py-3.5 px-4">
-                                <a href="{wa_url}" target="_blank" class="inline-flex items-center gap-1 bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition">
-                                    <span>💬 WhatsApp</span>
-                                </a>
-                            </td>
-                        </tr>
-        """
-    if not leads:
-        html_content += """
-                        <tr>
-                            <td colspan="7" class="py-12 text-center text-slate-400">Пока нет заявок. Отправьте первую тестовую заявку со страницы <a href="/pitch#pilot-form" class="text-indigo-400 font-bold underline">/pitch</a>!</td>
-                        </tr>
-        """
-    html_content += """
-                    </tbody>
-                </table>
-            </div>
-        </div>
-    </body>
-    </html>
-    """
-    return HTMLResponse(content=html_content)
+@app.get("/leads", response_class=RedirectResponse)
+async def view_leads_redirect():
+    """Безопасное перенаправление в защищенный раздел админ-панели."""
+    return RedirectResponse(url="/admin/leads", status_code=303)
 

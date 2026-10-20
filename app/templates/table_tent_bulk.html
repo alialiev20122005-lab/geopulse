@@ -18,6 +18,10 @@
         .gradient-header {
             background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #db2777 100%);
         }
+        @page {
+            size: A4 portrait;
+            margin: 8mm;
+        }
         @media print {
             .no-print { display: none !important; }
             body { 
@@ -27,14 +31,26 @@
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
-            .page-break {
-                page-break-after: always;
-                break-after: page;
+            .print-sheet {
+                page-break-after: always !important;
+                break-after: page !important;
+                min-height: 275mm;
+                max-height: 285mm;
+                box-sizing: border-box;
+                display: grid !important;
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                gap: 16px !important;
+            }
+            .print-sheet:last-child {
+                page-break-after: auto !important;
+                break-after: auto !important;
             }
             .bulk-card {
                 box-shadow: none !important;
                 border: 1px dashed #cbd5e1 !important;
                 page-break-inside: avoid !important;
+                break-inside: avoid !important;
+                height: 100% !important;
             }
         }
     </style>
@@ -73,71 +89,75 @@
         </div>
     </div>
 
-    <!-- Сетка карточек для печати (раскладка) -->
-    <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-8 print:grid-cols-2 print:gap-6">
-        {% for table in tables_range %}
-        <div class="bulk-card bg-white rounded-[32px] overflow-hidden shadow-xl border border-slate-200 flex flex-col text-center relative group {% if loop.index % 2 == 0 %}page-break{% endif %}">
-            
-            <!-- Индикатор линии разреза для типографии -->
-            <div class="no-print absolute top-2 right-2 text-[10px] text-slate-400 font-mono">
-                Линия нарезки ✂️
-            </div>
-
-            <!-- Шапка с градиентом -->
-            <header class="gradient-header text-white pt-6 pb-5 px-5 relative flex flex-col items-center">
-                <div class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-white text-[11px] font-bold mb-2 shadow-sm border border-white/25">
-                    <span>✨</span>
-                    <span>Обратная связь</span>
+    <!-- Листы карточек для печати (раскладка по 2 на лист А4) -->
+    <div class="max-w-4xl mx-auto space-y-8 print:space-y-0">
+        {% for pair in tables_range|batch(2) %}
+        <div class="print-sheet grid grid-cols-1 md:grid-cols-2 gap-8 print:gap-6">
+            {% for table in pair %}
+            <div class="bulk-card bg-white rounded-[32px] overflow-hidden shadow-xl border border-slate-200 flex flex-col text-center relative group">
+                
+                <!-- Индикатор линии разреза для типографии -->
+                <div class="no-print absolute top-2 right-2 text-[10px] text-slate-400 font-mono">
+                    Линия нарезки ✂️
                 </div>
 
-                <h2 class="text-xl font-black tracking-tight text-white mb-1">
-                    {{ business.name }}
-                </h2>
-
-                <div class="mt-1 px-4 py-1 rounded-full bg-white text-indigo-700 text-xs font-black uppercase tracking-wider shadow-sm">
-                    Столик №{{ table }}
-                </div>
-
-                <div class="flex items-center gap-1 mt-2 text-amber-300 text-xs">
-                    <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
-                </div>
-            </header>
-
-            <!-- Основная часть с цветным QR-кодом -->
-            <main class="p-6 flex flex-col items-center bg-white flex-1 justify-between">
-                <div class="relative p-[4px] rounded-[24px] gradient-border shadow-lg shadow-pink-500/10 mb-4">
-                    <div class="bg-white p-2.5 rounded-[20px] flex items-center justify-center">
-                        <img 
-                            src="/api/qr/{{ business_id }}?v=2&table={{ table }}" 
-                            alt="QR-код для столика {{ table }}" 
-                            class="w-44 h-44 object-contain select-none rounded-xl"
-                            loading="lazy"
-                        >
+                <!-- Шапка с градиентом -->
+                <header class="gradient-header text-white pt-6 pb-5 px-5 relative flex flex-col items-center">
+                    <div class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-white text-[11px] font-bold mb-2 shadow-sm border border-white/25">
+                        <span>✨</span>
+                        <span>Обратная связь</span>
                     </div>
-                </div>
 
-                <div class="space-y-1 mb-4">
-                    <h3 class="text-base font-black text-slate-900 tracking-tight">
-                        Как вам у нас?
-                    </h3>
-                    <p class="text-[11px] font-medium text-slate-500 leading-snug max-w-[240px] mx-auto">
-                        Наведите камеру смартфона, чтобы поставить оценку или поделиться впечатлениями ❤️
-                    </p>
-                </div>
+                    <h2 class="text-xl font-black tracking-tight text-white mb-1">
+                        {{ business.name }}
+                    </h2>
 
-                <div class="inline-flex items-center gap-3 px-3.5 py-1.5 rounded-xl bg-slate-50 border border-slate-100 text-slate-600 text-[10px] font-semibold">
-                    <span class="flex items-center gap-1">
-                        <svg class="w-3 h-3 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                        30 секунд
-                    </span>
-                    <span class="w-1 h-1 rounded-full bg-slate-300"></span>
-                    <span class="flex items-center gap-1">
-                        <svg class="w-3 h-3 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path></svg>
-                        Без приложений
-                    </span>
-                </div>
-            </main>
+                    <div class="mt-1 px-4 py-1 rounded-full bg-white text-indigo-700 text-xs font-black uppercase tracking-wider shadow-sm">
+                        Столик №{{ table }}
+                    </div>
 
+                    <div class="flex items-center gap-1 mt-2 text-amber-300 text-xs">
+                        <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+                    </div>
+                </header>
+
+                <!-- Основная часть с цветным QR-кодом -->
+                <main class="p-6 flex flex-col items-center bg-white flex-1 justify-between">
+                    <div class="relative p-[4px] rounded-[24px] gradient-border shadow-lg shadow-pink-500/10 mb-4">
+                        <div class="bg-white p-2.5 rounded-[20px] flex items-center justify-center">
+                            <img 
+                                src="/api/qr/{{ business_id }}?v=2&table={{ table }}" 
+                                alt="QR-код для столика {{ table }}" 
+                                class="w-44 h-44 object-contain select-none rounded-xl"
+                                loading="lazy"
+                            >
+                        </div>
+                    </div>
+
+                    <div class="space-y-1 mb-4">
+                        <h3 class="text-base font-black text-slate-900 tracking-tight">
+                            Как вам у нас?
+                        </h3>
+                        <p class="text-[11px] font-medium text-slate-500 leading-snug max-w-[240px] mx-auto">
+                            Наведите камеру смартфона, чтобы поставить оценку или поделиться впечатлениями ❤️
+                        </p>
+                    </div>
+
+                    <div class="inline-flex items-center gap-3 px-3.5 py-1.5 rounded-xl bg-slate-50 border border-slate-100 text-slate-600 text-[10px] font-semibold">
+                        <span class="flex items-center gap-1">
+                            <svg class="w-3 h-3 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                            30 секунд
+                        </span>
+                        <span class="w-1 h-1 rounded-full bg-slate-300"></span>
+                        <span class="flex items-center gap-1">
+                            <svg class="w-3 h-3 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path></svg>
+                            Без приложений
+                        </span>
+                    </div>
+                </main>
+
+            </div>
+            {% endfor %}
         </div>
         {% endfor %}
     </div>

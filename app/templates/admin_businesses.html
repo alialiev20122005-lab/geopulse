@@ -81,7 +81,17 @@
                                 📱 QR
                             </a>
                             <!-- Редактировать -->
-                            <button onclick="openEditModal('{{ b.id }}', '{{ b.name | replace('\'', '\\\'') }}', '{{ b.category }}', '{{ b.address | replace('\'', '\\\'') }}', '{{ b.yandex_maps_url }}', '{{ b.two_gis_url }}', '{{ b.status }}')" class="bg-slate-800 hover:bg-slate-700 text-white text-xs px-2.5 py-1.5 rounded-lg transition" title="Редактировать">
+                            <button type="button"
+                                    onclick="openEditFromBtn(this)"
+                                    data-id="{{ b.id }}"
+                                    data-name="{{ b.name }}"
+                                    data-category="{{ b.category }}"
+                                    data-address="{{ b.address }}"
+                                    data-yandex="{{ b.yandex_maps_url }}"
+                                    data-twogis="{{ b.two_gis_url or '' }}"
+                                    data-status="{{ b.status or 'pilot' }}"
+                                    class="bg-slate-800 hover:bg-slate-700 text-white text-xs px-2.5 py-1.5 rounded-lg transition" 
+                                    title="Редактировать">
                                 ✏️
                             </button>
                             <!-- Удалить заведение -->
@@ -228,6 +238,11 @@
 <script>
     let activeEditBusinessId = '';
     let activeEditBusinessName = '';
+
+    function openEditFromBtn(btn) {
+        const d = btn.dataset;
+        openEditModal(d.id, d.name, d.category, d.address, d.yandex, d.twogis, d.status);
+    }
 
     function openEditModal(id, name, category, address, yandex, twoGis, status) {
         activeEditBusinessId = id;
