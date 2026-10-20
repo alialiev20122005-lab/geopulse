@@ -1,0 +1,82 @@
+{% extends "admin_layout.html" %}
+
+{% block title %}Менеджеры Telegram — GeoPulse Admin{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight">Подключенные менеджеры в Telegram</h1>
+            <p class="text-xs sm:text-sm text-slate-400 font-medium">Управляющие, директора и администраторы, получающие алерты о жалобах в реальном времени</p>
+        </div>
+        <div class="text-xs text-slate-400 bg-slate-900 px-3.5 py-2 rounded-xl border border-slate-800 self-start sm:self-auto">
+            Всего привязано аккаунтов: <b class="text-white">{{ managers | length }}</b>
+        </div>
+    </div>
+
+    <!-- Информационная плашка с инструкцией подключения -->
+    <div class="bg-indigo-950/20 border border-indigo-500/30 rounded-2xl p-5 flex items-start gap-4">
+        <span class="text-2xl shrink-0">💡</span>
+        <div class="text-xs text-slate-300 leading-relaxed space-y-1">
+            <p class="font-bold text-white text-sm">Как подключить директора любого заведения за 30 секунд:</p>
+            <p>1. Скопируйте персональную ссылку заведения из раздела «Заведения» (вид: <code class="bg-slate-900 px-2 py-0.5 rounded text-indigo-300">https://t.me/{{ bot_username }}?start=biz_ID</code>);</p>
+            <p>2. Отправьте ссылку директору или управляющему в Telegram;</p>
+            <p>3. Директор нажимает <b>«Запустить» (/start)</b> — и бот автоматически связывает его с точкой!</p>
+        </div>
+    </div>
+
+    <!-- Таблица менеджеров -->
+    <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl overflow-x-auto shadow-xl">
+        <table class="w-full text-left text-sm">
+            <thead class="bg-slate-950/80 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800">
+                <tr>
+                    <th class="py-3.5 px-4">Заведение</th>
+                    <th class="py-3.5 px-4">Telegram Chat ID</th>
+                    <th class="py-3.5 px-4">Роль</th>
+                    <th class="py-3.5 px-4">Дата подключения</th>
+                    <th class="py-3.5 px-4 text-right">Действие</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/60 font-medium">
+                {% for m in managers %}
+                <tr class="hover:bg-slate-800/30 transition">
+                    <td class="py-4 px-4">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                            <span class="font-bold text-white text-sm">{{ m.business_name or m.business_id }}</span>
+                        </div>
+                        <p class="text-[11px] text-slate-400">ID: {{ m.business_id }}</p>
+                    </td>
+                    <td class="py-4 px-4 font-mono text-xs text-indigo-300 font-bold">
+                        {{ m.telegram_chat_id }}
+                    </td>
+                    <td class="py-4 px-4 text-xs">
+                        <span class="bg-slate-800 text-slate-300 px-2.5 py-1 rounded-full text-[11px] font-semibold">
+                            {{ m.role or 'owner' }}
+                        </span>
+                    </td>
+                    <td class="py-4 px-4 text-xs text-slate-400">
+                        {{ m.registered_at }}
+                    </td>
+                    <td class="py-4 px-4 text-right">
+                        <form action="/admin/managers/{{ m.record_id }}/delete" method="POST" onsubmit="return confirm('Отвязать этого управляющего от заведения?');" class="inline">
+                            <button type="submit" class="bg-rose-950/30 hover:bg-rose-950/60 text-rose-300 border border-rose-800/50 text-xs font-bold px-3 py-1.5 rounded-lg transition">
+                                Отвязать ✕
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="py-12 text-center text-slate-500">
+                        Пока нет привязанных управляющих. Отправьте ссылку управляющему из раздела <a href="/admin/businesses" class="text-indigo-400 underline">Заведения</a>!
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+{% endblock %}

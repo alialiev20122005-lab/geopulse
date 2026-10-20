@@ -79,6 +79,12 @@ def init_db():
         );
         """)
 
+        # Миграция: столбец status для businesses
+        try:
+            cursor.execute("ALTER TABLE businesses ADD COLUMN status TEXT DEFAULT 'pilot';")
+        except sqlite3.OperationalError:
+            pass
+
         conn.commit()
 
 def seed_initial_data(default_chat_id: str = ""):
@@ -238,4 +244,177 @@ def get_recent_leads(limit: int = 20) -> List[Dict[str, Any]]:
         cursor = conn.cursor()
         cursor.execute("SELECT * FROM leads ORDER BY created_at DESC LIMIT ?;", (limit,))
         return [dict(r) for r in cursor.fetchall()]
+
+# --- Административные функции платформы ---
+
+def get_global_stats() -> Dict[str, Any]:
+    """Сводная глобальная статистика по всей платформе для админ-панели."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        
+        # Заведения
+        cursor.execute("SELECT COUNT(*) FROM businesses;")
+        total_businesses = cursor.fetchone()[0]
+        
+        # Отзывы
+        cursor.execute("""
+        SELECT 
+            COUNT(*) as total_feedbacks,
+            SUM(CASE WHEN rating <= 3 THEN 1 ELSE 0 END) as negative_count,
+            SUM(CASE WHEN rating >= 4 THEN 1 ELSE 0 END) as positive_count,
+            AVG(rating) as avg_rating
+        FROM feedbacks;
+        """)
+        fb_stats = dict(cursor.fetchone())
+        
+        # Лиды
+        cursor.execute("SELECT COUNT(*) FROM leads;")
+        total_leads = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM leads WHERE status = 'new';")
+        new_leads = cursor.fetchone()[0]
+        
+        # Привязанные менеджеры
+        cursor.execute("SELECT COUNT(*) FROM business_owners;")
+        total_managers = cursor.fetchone()[0]
+
+        return {
+            "total_businesses": total_businesses,
+            "total_feedbacks": fb_stats["total_feedbacks"] or 0,
+            "negative_feedbacks": fb_stats["negative_count"] or 0,
+            "positive_feedbacks": fb_stats["positive_count"] or 0,
+            "avg_rating": round(fb_stats["avg_rating"] or 5.0, 1),
+            "total_leads": total_leads,
+            "new_leads": new_leads,
+            "total_managers": total_managers
+        }
+
+def get_all_businesses_with_meta() -> List[Dict[str, Any]]:
+    """Получение всех заведений с метаданными (число менеджеров, отзывы, средний балл)."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+        SELECT 
+            b.*,
+            (SELECT COUNT(*) FROM business_owners bo WHERE bo.business_id = b.id) as manager_count,
+            (SELECT COUNT(*) FROM feedbacks f WHERE f.business_id = b.id) as feedback_count,
+            (SELECT AVG(rating) FROM feedbacks f WHERE f.business_id = b.id) as avg_rating
+        FROM businesses b
+        ORDER BY b.created_at DESC;
+        """)
+        rows = cursor.fetchall()
+        result = []
+        for r in rows:
+            d = dict(r)
+            d["avg_rating"] = round(d["avg_rating"], 1) if d["avg_rating"] is not None else 5.0
+            if not d.get("status"):
+                d["status"] = "pilot"
+            result.append(d)
+        return result
+
+def update_business(business_id: str, data: Dict[str, Any]) -> bool:
+    """Обновление параметров заведения."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+        UPDATE businesses
+        SET name = :name,
+            category = :category,
+            address = :address,
+            yandex_maps_url = :yandex_maps_url,
+            two_gis_url = :two_gis_url,
+            welcome_text = :welcome_text,
+            negative_cta = :negative_cta,
+            positive_cta = :positive_cta,
+            status = :status
+        WHERE id = :id;
+        """, {
+            "id": business_id.lower().strip(),
+            "name": data.get("name", "").strip(),
+            "category": data.get("category", "").strip(),
+            "address": data.get("address", "").strip(),
+            "yandex_maps_url": data.get("yandex_maps_url", "").strip(),
+            "two_gis_url": data.get("two_gis_url", "").strip(),
+            "welcome_text": data.get("welcome_text", "").strip(),
+            "negative_cta": data.get("negative_cta", "").strip(),
+            "positive_cta": data.get("positive_cta", "").strip(),
+            "status": data.get("status", "pilot")
+        })
+        conn.commit()
+        return cursor.rowcount > 0
+
+def delete_business(business_id: str) -> bool:
+    """Полное удаление заведения и связанных данных."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        bid = business_id.lower().strip()
+        cursor.execute("DELETE FROM feedbacks WHERE business_id = ?;", (bid,))
+        cursor.execute("DELETE FROM business_owners WHERE business_id = ?;", (bid,))
+        cursor.execute("DELETE FROM businesses WHERE id = ?;", (bid,))
+        conn.commit()
+        return cursor.rowcount > 0
+
+def update_lead_status(lead_id: int, status: str) -> bool:
+    """Обновление статуса заявки на пилот."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE leads SET status = ? WHERE id = ?;", (status.strip(), lead_id))
+        conn.commit()
+        return cursor.rowcount > 0
+
+def delete_lead(lead_id: int) -> bool:
+    """Удаление лида из CRM."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM leads WHERE id = ?;", (lead_id,))
+        conn.commit()
+        return cursor.rowcount > 0
+
+def get_all_feedbacks_filtered(business_id: Optional[str] = None, rating_filter: Optional[str] = None, limit: int = 150) -> List[Dict[str, Any]]:
+    """Получение отзывов со всех точек с фильтрами."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        query = """
+        SELECT f.*, b.name as business_name, b.category as business_category
+        FROM feedbacks f
+        LEFT JOIN businesses b ON f.business_id = b.id
+        WHERE 1=1
+        """
+        params = []
+        if business_id and business_id != "all":
+            query += " AND f.business_id = ?"
+            params.append(business_id.lower().strip())
+        
+        if rating_filter == "negative":
+            query += " AND f.rating <= 3"
+        elif rating_filter == "positive":
+            query += " AND f.rating >= 4"
+
+        query += " ORDER BY f.created_at DESC LIMIT ?"
+        params.append(limit)
+
+        cursor.execute(query, params)
+        return [dict(r) for r in cursor.fetchall()]
+
+def get_all_managers() -> List[Dict[str, Any]]:
+    """Список всех привязанных менеджеров в Telegram со всех заведений."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+        SELECT bo.id as record_id, bo.business_id, bo.telegram_chat_id, bo.role, bo.registered_at,
+               b.name as business_name, b.category as business_category
+        FROM business_owners bo
+        LEFT JOIN businesses b ON bo.business_id = b.id
+        ORDER BY bo.registered_at DESC;
+        """)
+        return [dict(r) for r in cursor.fetchall()]
+
+def unlink_telegram_owner_by_id(record_id: int) -> bool:
+    """Отвязка Telegram-менеджера по ID записи."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("DELETE FROM business_owners WHERE id = ?;", (record_id,))
+        conn.commit()
+        return cursor.rowcount > 0
+
 

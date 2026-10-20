@@ -9,6 +9,11 @@ TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8758602246:AAFglq5spoLAqxp
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "8919849369")
 TELEGRAM_BOT_USERNAME = os.getenv("TELEGRAM_BOT_USERNAME", "my_geopulse_bot")
 
+# Настройки доступа в Админ-панель
+ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
+ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "geopulse2026")
+SESSION_SECRET = os.getenv("SESSION_SECRET", "geopulse-super-secret-session-key-2026")
+
 # Предустановленные карточки заведений для тестов и демонстраций
 BUSINESSES: Dict[str, Dict[str, Any]] = {
     "daikon": {

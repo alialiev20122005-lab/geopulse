@@ -1,0 +1,92 @@
+{% extends "admin_layout.html" %}
+
+{% block title %}Заявки CRM — GeoPulse Admin{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight">Воронка заявок на 14-дневный пилот</h1>
+            <p class="text-xs sm:text-sm text-slate-400 font-medium">CRM-управление потенциальными клиентами с сайта и коммерческого предложения</p>
+        </div>
+        <div class="text-xs text-slate-400 bg-slate-900 px-3.5 py-2 rounded-xl border border-slate-800 self-start sm:self-auto">
+            Всего заявок: <b class="text-white">{{ leads | length }}</b>
+        </div>
+    </div>
+
+    <!-- Таблица лидов -->
+    <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl overflow-x-auto shadow-xl">
+        <table class="w-full text-left text-sm">
+            <thead class="bg-slate-950/80 text-[11px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800">
+                <tr>
+                    <th class="py-3.5 px-4">ID / Дата</th>
+                    <th class="py-3.5 px-4">Заведение</th>
+                    <th class="py-3.5 px-4">Контактное лицо</th>
+                    <th class="py-3.5 px-4">Город / Столы</th>
+                    <th class="py-3.5 px-4">Статус воронки</th>
+                    <th class="py-3.5 px-4 text-right">Связь & Действие</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-800/60 font-medium">
+                {% for l in leads %}
+                <tr class="hover:bg-slate-800/30 transition">
+                    <td class="py-4 px-4 text-xs">
+                        <span class="font-mono text-slate-500 font-bold">#{{ l.id }}</span>
+                        <p class="text-[10px] text-slate-400 mt-0.5">{{ l.created_at }}</p>
+                    </td>
+                    <td class="py-4 px-4">
+                        <span class="font-bold text-white text-sm">{{ l.business_name }}</span>
+                        <p class="text-[10px] text-slate-400">Источник: {{ l.source }}</p>
+                    </td>
+                    <td class="py-4 px-4 text-xs">
+                        <p class="font-bold text-slate-200">{{ l.name }}</p>
+                        <p class="font-mono text-indigo-300 mt-0.5">{{ l.phone }}</p>
+                    </td>
+                    <td class="py-4 px-4 text-xs text-slate-300">
+                        <p>{{ l.city or 'Город не указан' }}</p>
+                        <p class="text-[11px] text-slate-500">{{ l.tables_count or '?' }} столов</p>
+                    </td>
+                    <td class="py-4 px-4">
+                        <!-- Быстрая смена статуса -->
+                        <form action="/admin/leads/{{ l.id }}/status" method="POST" class="inline">
+                            <select name="status" onchange="this.form.submit()" class="text-xs font-bold px-2.5 py-1.5 rounded-xl border focus:outline-none cursor-pointer
+                                {% if l.status == 'new' %}bg-rose-950/40 text-rose-300 border-rose-800/60
+                                {% elif l.status == 'paid' %}bg-emerald-950/40 text-emerald-300 border-emerald-800/60
+                                {% elif l.status == 'pilot_active' %}bg-indigo-950/40 text-indigo-300 border-indigo-800/60
+                                {% else %}bg-slate-950 text-slate-300 border-slate-700{% endif %}">
+                                <option value="new" {% if l.status == 'new' %}selected{% endif %}>🔴 Новый лид</option>
+                                <option value="contacted" {% if l.status == 'contacted' %}selected{% endif %}>🟡 В переговорах</option>
+                                <option value="tents_ready" {% if l.status == 'tents_ready' %}selected{% endif %}>📦 Тенты готовы</option>
+                                <option value="pilot_active" {% if l.status == 'pilot_active' %}selected{% endif %}>🚀 Пилот запущен (14 дн)</option>
+                                <option value="paid" {% if l.status == 'paid' %}selected{% endif %}>🟢 Оплачена подписка</option>
+                            </select>
+                        </form>
+                    </td>
+                    <td class="py-4 px-4 text-right">
+                        {% set raw_digits = l.phone | replace('+', '') | replace(' ', '') | replace('-', '') | replace('(', '') | replace(')', '') %}
+                        <div class="flex items-center justify-end gap-2">
+                            <a href="https://wa.me/{{ raw_digits }}?text=Здравствуйте,%20{{ l.name }}!%20Меня%20зовут%20Али,%20сервис%20GeoPulse.%20Вы%20оставляли%20заявку%20на%2014-дневный%20бесплатный%20пилот%20для%20«{{ l.business_name }}»." target="_blank" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition inline-flex items-center gap-1">
+                                <span>💬 WhatsApp</span>
+                            </a>
+                            <form action="/admin/leads/{{ l.id }}/delete" method="POST" onsubmit="return confirm('Удалить эту заявку?');" class="inline">
+                                <button type="submit" class="text-slate-500 hover:text-rose-400 text-xs px-2 py-1 transition" title="Удалить лид">
+                                    🗑️
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="6" class="py-12 text-center text-slate-500">
+                        Пока нет заявок. Заполните тестовую заявку на странице <a href="/pitch#pilot-form" class="text-indigo-400 underline" target="_blank">коммерческого предложения</a>!
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+{% endblock %}

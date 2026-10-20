@@ -1,0 +1,112 @@
+{% extends "admin_layout.html" %}
+
+{% block title %}Лента отзывов — GeoPulse Admin{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight">Единая лента отзывов</h1>
+            <p class="text-xs sm:text-sm text-slate-400 font-medium">Все оценки гостей со всех заведений с разбивкой на негатив и позитив</p>
+        </div>
+        <div class="text-xs text-slate-400 bg-slate-900 px-3.5 py-2 rounded-xl border border-slate-800 self-start sm:self-auto">
+            Отображено отзывов: <b class="text-white">{{ feedbacks | length }}</b>
+        </div>
+    </div>
+
+    <!-- Фильтры -->
+    <div class="bg-slate-900/60 border border-slate-800/80 p-4 rounded-2xl flex flex-wrap items-center justify-between gap-4">
+        
+        <!-- Вкладки по типу рейтинга -->
+        <div class="flex items-center gap-2">
+            <a href="/admin/reviews?business={{ selected_business }}" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition {% if not selected_rating %}bg-indigo-600 text-white{% else %}bg-slate-950 text-slate-400 hover:text-white{% endif %}">
+                Все отзывы
+            </a>
+            <a href="/admin/reviews?rating=negative&business={{ selected_business }}" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition {% if selected_rating == 'negative' %}bg-rose-600 text-white{% else %}bg-slate-950 text-rose-400 hover:bg-slate-800{% endif %}">
+                🚨 Только негатив (1–3 ★)
+            </a>
+            <a href="/admin/reviews?rating=positive&business={{ selected_business }}" class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition {% if selected_rating == 'positive' %}bg-emerald-600 text-white{% else %}bg-slate-950 text-emerald-400 hover:bg-slate-800{% endif %}">
+                ⭐ Только 4–5 ★
+            </a>
+        </div>
+
+        <!-- Селектор заведения -->
+        <form method="GET" action="/admin/reviews" class="flex items-center gap-2">
+            <input type="hidden" name="rating" value="{{ selected_rating }}">
+            <select name="business" onchange="this.form.submit()" class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500 font-semibold cursor-pointer">
+                <option value="all" {% if selected_business == 'all' %}selected{% endif %}>🏢 Все заведения</option>
+                {% for b in businesses %}
+                <option value="{{ b.id }}" {% if selected_business == b.id %}selected{% endif %}>{{ b.name }}</option>
+                {% endfor %}
+            </select>
+        </form>
+
+    </div>
+
+    <!-- Список отзывов -->
+    <div class="space-y-4">
+        {% for fb in feedbacks %}
+        <div class="p-5 rounded-2xl border transition 
+            {% if fb.rating <= 3 %}bg-rose-950/15 border-rose-900/40{% else %}bg-slate-900/60 border-slate-800/80{% endif %}">
+            
+            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                <div class="flex items-center gap-3">
+                    <span class="px-2.5 py-1 rounded-xl text-xs font-black 
+                        {% if fb.rating <= 3 %}bg-rose-500/20 text-rose-300 border border-rose-500/30{% else %}bg-emerald-500/20 text-emerald-300 border border-emerald-500/30{% endif %}">
+                        {{ "⭐" * fb.rating }} ({{ fb.rating }} из 5)
+                    </span>
+                    <span class="font-bold text-white text-sm">{{ fb.business_name or fb.business_id }}</span>
+                    {% if fb.table_number %}
+                    <span class="text-xs bg-slate-800 text-slate-300 px-2 py-0.5 rounded-md">🪑 Столик #{{ fb.table_number }}</span>
+                    {% endif %}
+                </div>
+                <div class="text-xs text-slate-500">
+                    {{ fb.created_at }}
+                </div>
+            </div>
+
+            <!-- Текст отзыва -->
+            <div class="mb-4">
+                <p class="text-sm text-slate-200 leading-relaxed font-medium">
+                    «{{ fb.comment }}»
+                </p>
+            </div>
+
+            <!-- Контакт клиента и статус -->
+            <div class="flex flex-wrap items-center justify-between gap-3 pt-3 border-t border-slate-800/60 text-xs">
+                <div class="flex items-center gap-2">
+                    <span class="text-slate-400">Контакт гостя:</span>
+                    {% if fb.contact %}
+                        <span class="font-mono font-bold text-indigo-300">{{ fb.contact }}</span>
+                        {% set raw_digits = fb.contact | replace('+', '') | replace(' ', '') | replace('-', '') | replace('(', '') | replace(')', '') %}
+                        {% if raw_digits | length >= 10 %}
+                        <a href="https://wa.me/{{ raw_digits }}" target="_blank" class="ml-2 inline-flex items-center gap-1 bg-emerald-600/30 text-emerald-300 border border-emerald-500/40 px-2 py-0.5 rounded-lg text-[11px] font-bold hover:bg-emerald-600/50 transition">
+                            WhatsApp
+                        </a>
+                        {% endif %}
+                    {% else %}
+                        <span class="text-slate-500 italic">Анонимно</span>
+                    {% endif %}
+                </div>
+
+                <div>
+                    {% if fb.rating <= 3 %}
+                    <span class="text-rose-400 font-bold">🛡️ Перехвачен (не ушел на Карты)</span>
+                    {% else %}
+                    <span class="text-emerald-400 font-bold">✅ Отправлен на Яндекс.Карты</span>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+        {% else %}
+        <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-12 text-center text-slate-400">
+            <span class="text-3xl block mb-2">🔍</span>
+            Отзывов по выбранным фильтрам не найдено.
+        </div>
+        {% endfor %}
+    </div>
+
+</div>
+{% endblock %}

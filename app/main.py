@@ -45,6 +45,9 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title="GeoPulse Multi-Tenant", lifespan=lifespan)
 templates = Jinja2Templates(directory="app/templates")
 
+from app.admin import router as admin_router
+app.include_router(admin_router)
+
 class FeedbackPayload(BaseModel):
     business_id: str
     rating: int

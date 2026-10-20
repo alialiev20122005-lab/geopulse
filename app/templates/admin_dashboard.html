@@ -1,0 +1,156 @@
+{% extends "admin_layout.html" %}
+
+{% block title %}Сводка & KPI — GeoPulse Admin{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+
+    <!-- Заголовок страницы -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight">Сводка платформы</h1>
+            <p class="text-xs sm:text-sm text-slate-400 font-medium">Контроль ключевых метрик заведений, отзывов и входящих заявок</p>
+        </div>
+        <div class="flex items-center gap-3">
+            <a href="/admin/businesses#add-business" class="gradient-brand hover:opacity-95 text-white font-bold text-xs py-2.5 px-4 rounded-xl shadow-lg shadow-indigo-500/20 transition active:scale-95 flex items-center gap-1.5">
+                <span>+ Добавить точку</span>
+            </a>
+            <a href="/pitch" target="_blank" class="bg-slate-900 hover:bg-slate-800 text-slate-300 font-bold text-xs py-2.5 px-3.5 rounded-xl border border-slate-800 transition">
+                <span>📄 КП онлайн</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- 4 Главные KPI карточки -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        <!-- Карточка 1: Заведения -->
+        <div class="bg-slate-900/60 border border-slate-800/80 p-5 rounded-2xl backdrop-blur-sm">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-bold uppercase tracking-wider text-slate-400">Точек в системе</span>
+                <span class="w-8 h-8 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center font-bold">🏢</span>
+            </div>
+            <p class="text-3xl font-black text-white">{{ stats.total_businesses }}</p>
+            <p class="text-[11px] text-slate-400 mt-1">Рестораны, салоны, сервисы</p>
+        </div>
+
+        <!-- Карточка 2: Перехвачено негатива -->
+        <div class="bg-slate-900/60 border border-slate-800/80 p-5 rounded-2xl backdrop-blur-sm">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-bold uppercase tracking-wider text-rose-400">Перехвачено жалоб</span>
+                <span class="w-8 h-8 rounded-xl bg-rose-500/10 text-rose-400 flex items-center justify-center font-bold">🛡️</span>
+            </div>
+            <p class="text-3xl font-black text-rose-400">{{ stats.negative_feedbacks }}</p>
+            <p class="text-[11px] text-slate-400 mt-1">100% не попали на Карты</p>
+        </div>
+
+        <!-- Карточка 3: Позитивные отзывы -->
+        <div class="bg-slate-900/60 border border-slate-800/80 p-5 rounded-2xl backdrop-blur-sm">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-bold uppercase tracking-wider text-emerald-400">Поток 4–5 ★</span>
+                <span class="w-8 h-8 rounded-xl bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold">⭐</span>
+            </div>
+            <p class="text-3xl font-black text-emerald-400">{{ stats.positive_feedbacks }}</p>
+            <p class="text-[11px] text-slate-400 mt-1">Отправлено на Яндекс & 2ГИС</p>
+        </div>
+
+        <!-- Карточка 4: Заявки на пилот -->
+        <div class="bg-slate-900/60 border border-slate-800/80 p-5 rounded-2xl backdrop-blur-sm">
+            <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-bold uppercase tracking-wider text-indigo-400">Заявок на пилот</span>
+                <span class="w-8 h-8 rounded-xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center font-bold">🎯</span>
+            </div>
+            <div class="flex items-baseline gap-2">
+                <p class="text-3xl font-black text-white">{{ stats.total_leads }}</p>
+                {% if stats.new_leads > 0 %}
+                <span class="text-xs font-bold text-rose-400 bg-rose-500/10 px-2 py-0.5 rounded-full">новых: {{ stats.new_leads }}</span>
+                {% endif %}
+            </div>
+            <p class="text-[11px] text-slate-400 mt-1">Лиды с сайта и презентации</p>
+        </div>
+
+    </div>
+
+    <!-- Две колонки: Свежие лиды и Свежие отзывы -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        <!-- Колонка 1: Новые заявки на 14-дневный пилот -->
+        <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-base font-bold text-white flex items-center gap-2">
+                        <span>🎯 Свежие заявки на пилот</span>
+                    </h2>
+                    <a href="/admin/leads" class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold">Все заявки →</a>
+                </div>
+
+                <div class="space-y-3">
+                    {% for lead in recent_leads[:5] %}
+                    <div class="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800/60 flex items-center justify-between gap-3">
+                        <div>
+                            <div class="flex items-center gap-2">
+                                <span class="font-bold text-white text-sm">{{ lead.business_name }}</span>
+                                <span class="text-[10px] font-bold px-2 py-0.5 rounded-full 
+                                    {% if lead.status == 'new' %}bg-rose-500/20 text-rose-300
+                                    {% elif lead.status == 'paid' %}bg-emerald-500/20 text-emerald-300
+                                    {% else %}bg-indigo-500/20 text-indigo-300{% endif %}">
+                                    {{ lead.status }}
+                                </span>
+                            </div>
+                            <p class="text-xs text-slate-400 mt-0.5">{{ lead.name }} • {{ lead.phone }} ({{ lead.city }})</p>
+                        </div>
+                        <a href="https://wa.me/{{ lead.phone | replace('+', '') | replace(' ', '') | replace('-', '') | replace('(', '') | replace(')', '') }}" target="_blank" class="shrink-0 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-lg transition">
+                            WhatsApp
+                        </a>
+                    </div>
+                    {% else %}
+                    <p class="text-xs text-slate-500 py-6 text-center">Заявок пока нет. Отправьте тестовую на странице /pitch</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="pt-4 mt-4 border-t border-slate-800/60 text-right">
+                <a href="/admin/leads" class="text-xs font-bold text-indigo-400 hover:underline">Открыть воронку CRM →</a>
+            </div>
+        </div>
+
+        <!-- Колонка 2: Последние перехваченные отзывы -->
+        <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 flex flex-col justify-between">
+            <div>
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-base font-bold text-white flex items-center gap-2">
+                        <span>💬 Последние отзывы гостей</span>
+                    </h2>
+                    <a href="/admin/reviews" class="text-xs text-indigo-400 hover:text-indigo-300 font-semibold">Все отзывы →</a>
+                </div>
+
+                <div class="space-y-3">
+                    {% for fb in recent_feedbacks[:5] %}
+                    <div class="p-3.5 rounded-xl bg-slate-950/60 border border-slate-800/60">
+                        <div class="flex items-center justify-between mb-1">
+                            <span class="font-bold text-white text-xs">{{ fb.business_name or fb.business_id }}</span>
+                            <span class="text-xs font-black {% if fb.rating <= 3 %}text-rose-400{% else %}text-emerald-400{% endif %}">
+                                {{ "⭐" * fb.rating }} ({{ fb.rating }}/5)
+                            </span>
+                        </div>
+                        <p class="text-xs text-slate-300 italic">«{{ fb.comment }}»</p>
+                        <div class="flex items-center justify-between text-[10px] text-slate-500 mt-2">
+                            <span>Столик: {{ fb.table_number or 'Без номера' }}</span>
+                            <span>{{ fb.created_at }}</span>
+                        </div>
+                    </div>
+                    {% else %}
+                    <p class="text-xs text-slate-500 py-6 text-center">Отзывов пока нет</p>
+                    {% endfor %}
+                </div>
+            </div>
+
+            <div class="pt-4 mt-4 border-t border-slate-800/60 text-right">
+                <a href="/admin/reviews" class="text-xs font-bold text-indigo-400 hover:underline">Перейти в ленту отзывов →</a>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}
