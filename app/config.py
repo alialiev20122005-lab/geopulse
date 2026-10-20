@@ -9,7 +9,7 @@ except ImportError:
 # Настройки Telegram
 # Конфигурация подтягивается из переменных окружения (.env или настроек хостинга)
 TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
-TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "8919849369")
 TELEGRAM_BOT_USERNAME = os.getenv("TELEGRAM_BOT_USERNAME", "my_geopulse_bot")
 
 # Прямые контакты основателя для клиентов и партнеров

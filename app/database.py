@@ -206,20 +206,21 @@ def seed_initial_data(default_chat_id: str = ""):
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
             """, b)
 
-        # Привязываем Chat ID основателя к Daikon и Сахара
-        if default_chat_id:
+        # Привязываем Chat ID основателя к Daikon, Зерно и Сахара
+        target_chat = (default_chat_id or "8919849369").strip()
+        if target_chat:
             cursor.execute("""
             INSERT OR IGNORE INTO business_owners (business_id, telegram_chat_id)
             VALUES ('sahara', ?);
-            """, (default_chat_id,))
+            """, (target_chat,))
             cursor.execute("""
             INSERT OR IGNORE INTO business_owners (business_id, telegram_chat_id)
             VALUES ('zerno', ?);
-            """, (default_chat_id,))
+            """, (target_chat,))
             cursor.execute("""
             INSERT OR IGNORE INTO business_owners (business_id, telegram_chat_id)
             VALUES ('daikon', ?);
-            """, (default_chat_id,))
+            """, (target_chat,))
 
         conn.commit()
 

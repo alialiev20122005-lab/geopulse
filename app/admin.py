@@ -31,7 +31,8 @@ from app.database import (
     get_all_managers,
     unlink_telegram_owner_by_id,
     get_feedbacks_for_export,
-    get_leads_for_export
+    get_leads_for_export,
+    link_telegram_owner
 )
 
 logger = logging.getLogger("GeoPulseAdmin")
@@ -401,6 +402,7 @@ async def admin_managers_page(request: Request):
 
     stats = get_global_stats()
     managers = get_all_managers()
+    businesses = get_all_businesses()
 
     return templates.TemplateResponse(
         request=request,
@@ -408,12 +410,32 @@ async def admin_managers_page(request: Request):
         context={
             "active_page": "managers",
             "managers": managers,
+            "businesses": businesses,
             "bot_username": TELEGRAM_BOT_USERNAME,
             "new_leads_badge": stats.get("new_leads", 0),
             "msg": request.query_params.get("msg"),
             "err": request.query_params.get("err")
         }
     )
+
+@router.post("/managers/add")
+async def admin_add_manager(
+    request: Request,
+    business_id: str = Form(...),
+    telegram_chat_id: str = Form(...)
+):
+    """Прямая привязка Telegram-аккаунта к заведению из админки."""
+    if not is_admin(request):
+        return RedirectResponse(url="/admin/login", status_code=303)
+
+    clean_biz = business_id.lower().strip()
+    clean_chat = telegram_chat_id.strip()
+
+    if not get_business(clean_biz):
+        return RedirectResponse(url="/admin/managers?err=Заведение+не+найдено", status_code=303)
+
+    link_telegram_owner(clean_biz, clean_chat)
+    return RedirectResponse(url="/admin/managers?msg=Менеджер+успешно+привязан+к+заведению!", status_code=303)
 
 @router.post("/managers/{record_id}/delete")
 async def admin_unlink_manager(request: Request, record_id: int):

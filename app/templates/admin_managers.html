@@ -78,5 +78,23 @@
         </table>
     </div>
 
+    <!-- Форма ручной привязки менеджера -->
+    <div class="bg-slate-900/60 border border-slate-800/80 rounded-2xl p-6 sm:p-8">
+        <h2 class="text-base font-bold text-white mb-1">+ Привязать Telegram-менеджера вручную</h2>
+        <p class="text-xs text-slate-400 mb-4">Укажите Telegram Chat ID управляющего и выберите заведение</p>
+
+        <form action="/admin/managers/add" method="POST" class="flex flex-col sm:flex-row gap-3">
+            <select name="business_id" required class="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 font-semibold cursor-pointer">
+                {% for b in businesses %}
+                <option value="{{ b.id }}">{{ b.name }} ({{ b.id }})</option>
+                {% endfor %}
+            </select>
+            <input type="text" name="telegram_chat_id" required placeholder="Telegram Chat ID (например: 8919849369)" class="bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-xs text-white focus:outline-none focus:border-indigo-500 flex-1 font-mono">
+            <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-5 py-2.5 rounded-xl transition shadow-lg shadow-indigo-600/30">
+                Привязать точку
+            </button>
+        </form>
+    </div>
+
 </div>
 {% endblock %}
