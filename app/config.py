@@ -17,6 +17,9 @@ FOUNDER_PHONE = os.getenv("FOUNDER_PHONE", "79038272579")
 FOUNDER_PHONE_DISPLAY = os.getenv("FOUNDER_PHONE_DISPLAY", "+7 (903) 827-25-79")
 FOUNDER_TELEGRAM = os.getenv("FOUNDER_TELEGRAM", "mbappeeed")
 
+# Базовый домен сервиса для формирования внешних ссылок
+BASE_URL = os.getenv("BASE_URL", "https://geopulse-yo8k.onrender.com").rstrip("/")
+
 # Настройки доступа в Админ-панель
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "geopulse2026")

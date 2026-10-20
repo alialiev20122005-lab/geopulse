@@ -12,6 +12,7 @@ async def run_tests():
         
         # 1. Database Configuration Checks
         print("\n[TEST 1] Verifying SQLite WAL mode, foreign keys, and indexes...")
+        db.init_db()
         conn = db.get_connection()
         journal_mode = conn.execute("PRAGMA journal_mode;").fetchone()[0]
         foreign_keys = conn.execute("PRAGMA foreign_keys;").fetchone()[0]
@@ -29,13 +30,21 @@ async def run_tests():
             assert resp.status_code == 200, f"Route {path} failed with {resp.status_code}"
             print(f"  -> GET {path} returned 200 OK")
 
-        # 3. Business Onboarding & QR Verification
-        print("\n[TEST 3] Testing QR code generator and caching headers...")
+        # 3. Business Onboarding & QR Verification, Favicon, OpenGraph
+        print("\n[TEST 3] Testing QR code, Favicon, and OpenGraph assets...")
         resp = await client.get("/api/qr/zerno?v=2&table=5")
         assert resp.status_code == 200
         assert resp.headers.get("content-type") == "image/png"
         assert "max-age=86400" in resp.headers.get("cache-control", "")
         print("  -> QR code generated successfully with Cache-Control headers!")
+
+        resp_fav = await client.get("/favicon.ico")
+        assert resp_fav.status_code == 200
+        print("  -> /favicon.ico served with 200 OK!")
+
+        resp_og = await client.get("/static/og-preview.png")
+        assert resp_og.status_code == 200
+        print("  -> /static/og-preview.png OpenGraph banner served with 200 OK!")
 
         # 4. Review Page Accessibility & Table query param
         print("\n[TEST 4] Review page for existing business...")
@@ -83,7 +92,23 @@ async def run_tests():
         resp = await client.post("/api/feedback", json=xss_feedback)
         assert resp.status_code == 200
         assert resp.json().get("status") == "ok"
+        fb_id = resp.json().get("feedback_id")
         print("  -> Rating 2 intercepted safely without server errors!")
+
+        # Unauthorized feedback status update -> 403
+        resp_stat_unauth = await client.post(f"/api/feedback/{fb_id}/status", data={"status": "resolved"})
+        assert resp_stat_unauth.status_code == 403
+        print("  -> Unauthorized feedback status change properly blocked with 403!")
+
+        # Authorized Manager status update with session cookie -> 200
+        resp_stat_auth = await client.post(
+            f"/api/feedback/{fb_id}/status", 
+            data={"status": "resolved"},
+            cookies={"dashboard_unlocked_zerno": "1"}
+        )
+        assert resp_stat_auth.status_code == 200
+        assert resp_stat_auth.json().get("new_status") == "resolved"
+        print("  -> Authorized Manager successfully marked complaint as 'resolved'!")
 
         # 6. Pilot Request Payload Validations
         print("\n[TEST 6] Testing Pilot Lead generation and validation...")

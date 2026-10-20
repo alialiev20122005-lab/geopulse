@@ -89,6 +89,12 @@ def init_db():
         except sqlite3.OperationalError:
             pass
 
+        # Миграция: столбец status для feedbacks ('new' | 'resolved')
+        try:
+            cursor.execute("ALTER TABLE feedbacks ADD COLUMN status TEXT DEFAULT 'new';")
+        except sqlite3.OperationalError:
+            pass
+
         # Оптимизация: составные индексы для аналитики и выборок
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_feedbacks_business ON feedbacks(business_id, created_at DESC);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_owners_biz ON business_owners(business_id);")
@@ -230,7 +236,8 @@ def get_business_stats(business_id: str) -> Dict[str, Any]:
             COUNT(*) as total_count,
             AVG(rating) as avg_rating,
             SUM(CASE WHEN rating <= 3 THEN 1 ELSE 0 END) as negative_count,
-            SUM(CASE WHEN rating >= 4 THEN 1 ELSE 0 END) as positive_count
+            SUM(CASE WHEN rating >= 4 THEN 1 ELSE 0 END) as positive_count,
+            SUM(CASE WHEN status = 'resolved' THEN 1 ELSE 0 END) as resolved_count
         FROM feedbacks 
         WHERE business_id = ?;
         """, (business_id.lower(),))
@@ -240,7 +247,7 @@ def get_business_stats(business_id: str) -> Dict[str, Any]:
         SELECT * FROM feedbacks 
         WHERE business_id = ? 
         ORDER BY created_at DESC 
-        LIMIT 20;
+        LIMIT 50;
         """, (business_id.lower(),))
         recent_feedbacks = [dict(r) for r in cursor.fetchall()]
 
@@ -248,6 +255,22 @@ def get_business_stats(business_id: str) -> Dict[str, Any]:
             "stats": stats,
             "feedbacks": recent_feedbacks
         }
+
+def update_feedback_status(feedback_id: int, status: str) -> bool:
+    """Обновление статуса обработки обращения ('new' | 'resolved')."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("UPDATE feedbacks SET status = ? WHERE id = ?;", (status, feedback_id))
+        conn.commit()
+        return cursor.rowcount > 0
+
+def get_feedback_by_id(feedback_id: int) -> Optional[Dict[str, Any]]:
+    """Получение обращения по ID."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM feedbacks WHERE id = ?;", (feedback_id,))
+        row = cursor.fetchone()
+        return dict(row) if row else None
 
 def create_lead(name: str, business_name: str, phone: str, city: str = "", tables_count: str = "", source: str = "web") -> int:
     """Сохранение новой заявки на 14-дневный бесплатный пилот."""

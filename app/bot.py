@@ -6,7 +6,7 @@ from datetime import datetime
 from typing import List, Optional
 import httpx
 
-from app.config import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, SESSION_SECRET
+from app.config import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, SESSION_SECRET, BASE_URL
 from app.database import (
     link_telegram_owner,
     get_business,
@@ -201,7 +201,7 @@ async def telegram_polling_loop():
                                 mgr_token = get_manager_token(business_id)
                                 welcome_markup = {
                                     "inline_keyboard": [[
-                                        {"text": "📊 Открыть личный дашборд", "url": f"https://geopulse-yo8k.onrender.com/dashboard/{business_id}?auth={mgr_token}"}
+                                        {"text": "📊 Открыть личный дашборд", "url": f"{BASE_URL}/dashboard/{business_id}?auth={mgr_token}"}
                                     ]]
                                 }
                                 await send_message(chat_id, welcome_msg, reply_markup=welcome_markup)
@@ -247,7 +247,7 @@ async def telegram_polling_loop():
                                     mgr_token = get_manager_token(b["id"])
                                     stat_markup = {
                                         "inline_keyboard": [[
-                                            {"text": "📊 Открыть полный дашборд", "url": f"https://geopulse-yo8k.onrender.com/dashboard/{b['id']}?auth={mgr_token}"}
+                                            {"text": "📊 Открыть полный дашборд", "url": f"{BASE_URL}/dashboard/{b['id']}?auth={mgr_token}"}
                                         ]]
                                     }
                                     await send_message(chat_id, stat_msg, reply_markup=stat_markup)

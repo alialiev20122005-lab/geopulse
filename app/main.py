@@ -13,7 +13,8 @@ from collections import defaultdict
 
 import qrcode
 from fastapi import FastAPI, HTTPException, Request, Form, BackgroundTasks
-from fastapi.responses import HTMLResponse, Response, RedirectResponse
+from fastapi.responses import HTMLResponse, Response, RedirectResponse, FileResponse
+from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
@@ -46,9 +47,12 @@ from app.database import (
     get_business_stats,
     get_business_chat_ids,
     create_lead,
-    get_recent_leads
+    get_recent_leads,
+    update_feedback_status,
+    get_feedback_by_id
 )
-from app.bot import broadcast_feedback, telegram_polling_loop, send_message
+from app.bot import broadcast_feedback, telegram_polling_loop, send_message, get_manager_token
+from app.admin import is_admin
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("GeoPulse")
@@ -67,6 +71,13 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(title="GeoPulse Multi-Tenant", lifespan=lifespan)
 templates = Jinja2Templates(directory="app/templates")
+
+# Подключение статических ресурсов и фавиконки
+app.mount("/static", StaticFiles(directory="app/static"), name="static")
+
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon_endpoint():
+    return FileResponse("app/static/favicon.ico")
 
 from app.admin import router as admin_router
 app.include_router(admin_router)
@@ -413,6 +424,28 @@ async def receive_feedback(payload: FeedbackPayload, request: Request, backgroun
     )
 
     return {"status": "ok", "feedback_id": feedback_id, "sent_to_telegram_count": 1}
+
+@app.post("/api/feedback/{feedback_id}/status")
+async def change_feedback_status(feedback_id: int, request: Request, status: str = Form(...)):
+    """Изменение статуса обработки жалобы/отзыва ('new' | 'resolved'). Доступно директору или админу."""
+    fb = get_feedback_by_id(feedback_id)
+    if not fb:
+        raise HTTPException(status_code=404, detail="Отзыв не найден")
+
+    # Проверка прав: администратор или директор этого заведения
+    admin_access = is_admin(request)
+    manager_cookie = request.cookies.get(f"dashboard_unlocked_{fb['business_id']}")
+    auth_param = request.query_params.get("auth") or request.headers.get("x-auth-token")
+    expected_token = get_manager_token(fb['business_id'])
+
+    manager_access = (manager_cookie == "1") or (auth_param == expected_token)
+
+    if not (admin_access or manager_access):
+        raise HTTPException(status_code=403, detail="Доступ запрещен")
+
+    new_status = "resolved" if status.strip().lower() == "resolved" else "new"
+    update_feedback_status(feedback_id, new_status)
+    return {"status": "ok", "feedback_id": feedback_id, "new_status": new_status}
 
 @app.get("/pitch", response_class=HTMLResponse)
 @app.get("/offer", response_class=HTMLResponse)
