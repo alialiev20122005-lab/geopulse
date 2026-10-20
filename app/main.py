@@ -424,6 +424,24 @@ async def pitch_presentation_page(request: Request):
         context={}
     )
 
+@app.get("/privacy", response_class=HTMLResponse)
+async def privacy_policy_page(request: Request):
+    """Политика обработки персональных данных (152-ФЗ)."""
+    return templates.TemplateResponse(
+        request=request,
+        name="privacy.html",
+        context={}
+    )
+
+@app.get("/terms", response_class=HTMLResponse)
+async def terms_of_service_page(request: Request):
+    """Пользовательское соглашение и публичная оферта."""
+    return templates.TemplateResponse(
+        request=request,
+        name="terms.html",
+        context={}
+    )
+
 @app.post("/api/pilot-request")
 async def handle_pilot_request(payload: PilotRequestPayload, request: Request, background_tasks: BackgroundTasks):
     """Прием заявки на 14-дневный бесплатный тест-драйв с мгновенным оповещением в Telegram."""

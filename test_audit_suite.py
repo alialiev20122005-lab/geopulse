@@ -23,8 +23,8 @@ async def run_tests():
         print("  -> PRAGMA checks PASSED!")
 
         # 2. Public Route Accessibility
-        print("\n[TEST 2] Verifying public HTTP routes (Landing, Pitch, Offer)...")
-        for path in ["/", "/pitch", "/offer"]:
+        print("\n[TEST 2] Verifying public HTTP routes (Landing, Pitch, Offer, Privacy, Terms)...")
+        for path in ["/", "/pitch", "/offer", "/privacy", "/terms"]:
             resp = await client.get(path)
             assert resp.status_code == 200, f"Route {path} failed with {resp.status_code}"
             print(f"  -> GET {path} returned 200 OK")
