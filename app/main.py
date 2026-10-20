@@ -36,7 +36,7 @@ class InMemoryRateLimiter:
 feedback_rate_limiter = InMemoryRateLimiter(requests_per_minute=20)
 pilot_rate_limiter = InMemoryRateLimiter(requests_per_minute=10)
 
-from app.config import TELEGRAM_BOT_USERNAME, TELEGRAM_CHAT_ID, ADMIN_PASSWORD, SESSION_SECRET
+from app.config import TELEGRAM_BOT_USERNAME, TELEGRAM_CHAT_ID, ADMIN_PASSWORD, SESSION_SECRET, PLANS, FOUNDER_PHONE
 from app.database import (
     init_db,
     seed_initial_data,
@@ -49,10 +49,13 @@ from app.database import (
     create_lead,
     get_recent_leads,
     update_feedback_status,
-    get_feedback_by_id
+    get_feedback_by_id,
+    get_payment_by_provider_id,
+    mark_payment_succeeded
 )
 from app.bot import broadcast_feedback, telegram_polling_loop, send_message, get_manager_token
 from app.admin import is_admin
+from app.payments import init_payment
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 logger = logging.getLogger("GeoPulse")
@@ -556,4 +559,136 @@ async def handle_pilot_request(payload: PilotRequestPayload, request: Request, b
 async def view_leads_redirect():
     """Безопасное перенаправление в защищенный раздел админ-панели."""
     return RedirectResponse(url="/admin/leads", status_code=303)
+
+# --- Платежный модуль (ЮKassa / Банковские счета) ---
+
+class CreatePaymentPayload(BaseModel):
+    business_id: str = Field(..., min_length=1, max_length=50)
+    plan_id: str = Field(..., pattern=r"^(start|business|network)$")
+    phone: Optional[str] = Field("", max_length=50)
+    email: Optional[str] = Field("", max_length=100)
+
+@app.post("/api/payments/create")
+async def create_payment_endpoint(payload: CreatePaymentPayload):
+    """Инициализация оплаты тарифа заведения."""
+    biz = get_business(payload.business_id)
+    if not biz:
+        raise HTTPException(status_code=404, detail="Заведение не найдено")
+
+    result = await init_payment(
+        business_id=payload.business_id,
+        plan_id=payload.plan_id,
+        phone=payload.phone or "",
+        email=payload.email or ""
+    )
+    return result
+
+@app.get("/pay/sandbox", response_class=HTMLResponse)
+async def pay_sandbox_page(pid: str, request: Request):
+    """Экран оплаты подписки (тестовый режим / выставление счета)."""
+    payment = get_payment_by_provider_id(pid)
+    if not payment:
+        raise HTTPException(status_code=404, detail="Платеж не найден")
+
+    biz = get_business(payment["business_id"])
+    plan = PLANS.get(payment["plan"], PLANS["start"])
+
+    # Готовим текст для выставления счета
+    invoice_msg = (
+        f"Здравствуйте, Али! Прошу выставить счет на оплату сервиса GeoPulse:\n"
+        f"• Заведение: {biz['name'] if biz else payment['business_id']}\n"
+        f"• Тариф: {plan['name']} ({plan['price']} ₽)\n"
+        f"• ID платежа: {pid}\n\n"
+        f"Наши реквизиты высылаю ниже:"
+    )
+    import urllib.parse
+    invoice_text = urllib.parse.quote(invoice_msg)
+
+    return templates.TemplateResponse(
+        request=request,
+        name="pay_sandbox.html",
+        context={
+            "payment": payment,
+            "business": biz,
+            "plan": plan,
+            "invoice_text": invoice_text
+        }
+    )
+
+@app.post("/api/payments/sandbox-confirm")
+async def sandbox_confirm_payment(pid: str = Form(...), background_tasks: BackgroundTasks = None):
+    """Подтверждение оплаты в песочнице."""
+    payment = get_payment_by_provider_id(pid)
+    if not payment:
+        raise HTTPException(status_code=404, detail="Платеж не найден")
+
+    mark_payment_succeeded(pid, days=30)
+    biz = get_business(payment["business_id"])
+    biz_name = biz["name"] if biz else payment["business_id"]
+
+    # Уведомление основателю в Telegram
+    if TELEGRAM_CHAT_ID:
+        notice = (
+            f"💰 <b>НОВАЯ ОПЛАТА ПОДПИСКИ!</b>\n\n"
+            f"🏢 <b>Заведение:</b> {html.escape(biz_name)}\n"
+            f"📦 <b>Тариф:</b> {payment['plan'].upper()}\n"
+            f"💵 <b>Сумма:</b> {payment['amount']} ₽\n"
+            f"📱 <b>Контакт:</b> {payment.get('payer_phone') or 'Не указан'}\n"
+            f"✅ <i>Статус заведения переведен в 'active' на 30 дней.</i>"
+        )
+        if background_tasks:
+            background_tasks.add_task(send_message, TELEGRAM_CHAT_ID, notice)
+        else:
+            await send_message(TELEGRAM_CHAT_ID, notice)
+
+    return RedirectResponse(url=f"/pay/success?bid={payment['business_id']}&plan={payment['plan']}", status_code=303)
+
+@app.post("/api/payments/webhook")
+async def yookassa_webhook(request: Request, background_tasks: BackgroundTasks):
+    """Официальный вебхук ЮKassa для обработки события payment.succeeded."""
+    try:
+        data = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid JSON payload")
+
+    event = data.get("event")
+    obj = data.get("object", {})
+
+    if event == "payment.succeeded":
+        payment_id = obj.get("id")
+        if payment_id:
+            success = mark_payment_succeeded(payment_id, days=30)
+            if success:
+                logger.info(f"✅ Успешный платеж ЮKassa #{payment_id} обработан, подписка продлена.")
+                if TELEGRAM_CHAT_ID:
+                    amount = obj.get("amount", {}).get("value", "0")
+                    msg = (
+                        f"🎉 <b>ПОЛУЧЕНА ОПЛАТА ЧЕРЕЗ ЮKASSA!</b>\n\n"
+                        f"💳 <b>ID платежа:</b> <code>{payment_id}</code>\n"
+                        f"💵 <b>Сумма:</b> {amount} ₽\n"
+                        f"✅ <i>Подписка заведения успешно активирована на 30 дней.</i>"
+                    )
+                    background_tasks.add_task(send_message, TELEGRAM_CHAT_ID, msg)
+
+    return {"status": "ok"}
+
+@app.get("/pay/success", response_class=HTMLResponse)
+async def payment_success_page(request: Request, bid: str = "daikon", plan: str = "start"):
+    """Экран успешной оплаты подписки."""
+    biz = get_business(bid)
+    if not biz:
+        biz = {"id": bid, "name": "Ваше заведение"}
+
+    from datetime import datetime, timedelta
+    paid_until = (datetime.now() + timedelta(days=30)).strftime("%d.%m.%Y")
+
+    return templates.TemplateResponse(
+        request=request,
+        name="pay_success.html",
+        context={
+            "business": biz,
+            "plan_id": plan,
+            "paid_until": paid_until
+        }
+    )
 

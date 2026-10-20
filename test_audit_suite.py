@@ -244,6 +244,45 @@ async def run_tests():
         assert "Журнал обращений клиентов" in resp.text
         print("  -> Platform Admin has seamless direct access to venue dashboards!")
 
+        # 11. Payments & Subscription Activation
+        print("\n[TEST 11] Verifying Online Payments & Subscription Activation...")
+        pay_payload = {
+            "business_id": "zerno",
+            "plan_id": "start",
+            "phone": "+7 (999) 555-44-33",
+            "email": "owner@zerno.ru"
+        }
+        resp = await client.post("/api/payments/create", json=pay_payload)
+        assert resp.status_code == 200
+        pay_data = resp.json()
+        assert pay_data.get("status") == "ok"
+        pid = pay_data.get("payment_id")
+        assert pid is not None
+        print("  -> Payment intent created successfully with provider ID!")
+
+        # Sandbox page loads with 200 OK
+        resp = await client.get(f"/pay/sandbox?pid={pid}")
+        assert resp.status_code == 200
+        assert "Оформление подписки" in resp.text
+        print("  -> Sandbox/Invoice payment screen rendered successfully with 200 OK!")
+
+        # Confirm payment
+        resp = await client.post("/api/payments/sandbox-confirm", data={"pid": pid}, follow_redirects=False)
+        assert resp.status_code == 303
+        assert "/pay/success" in resp.headers.get("location", "")
+        print("  -> Payment confirmed, redirected to success page!")
+
+        # Check success page
+        resp = await client.get("/pay/success?bid=zerno&plan=start")
+        assert resp.status_code == 200
+        assert "Подписка активирована" in resp.text
+        print("  -> /pay/success screen loaded with 200 OK!")
+
+        # Verify DB reflects active subscription
+        zerno = db.get_business("zerno")
+        assert zerno.get("status") == "active"
+        print("  -> Business status successfully transitioned from 'pilot' to 'active' in DB!")
+
     print("\n=== ALL AUDIT & REGRESSION TESTS PASSED (100% SUCCESS) ===")
 
 if __name__ == "__main__":

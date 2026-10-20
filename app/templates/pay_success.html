@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Оплата прошла успешно! — GeoPulse</title>
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <style>body { font-family: 'Inter', sans-serif; }</style>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 min-h-screen flex items-center justify-center p-4">
+
+    <div class="max-w-md w-full bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl text-center relative overflow-hidden">
+        
+        <div class="w-16 h-16 bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 rounded-2xl flex items-center justify-center mx-auto mb-5 shadow-lg shadow-emerald-500/10">
+            <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+        </div>
+
+        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-bold uppercase tracking-wider mb-2">
+            Оплата подтверждена
+        </div>
+
+        <h1 class="text-2xl font-black text-white mb-2">Подписка активирована! 🎉</h1>
+        <p class="text-xs text-slate-400 mb-6 leading-relaxed">
+            Тариф для «{{ business.name }}» успешно продлен на 30 дней. Все функции защиты репутации и перехвата негатива работают в полном объеме.
+        </p>
+
+        <div class="bg-slate-950/70 border border-slate-800 rounded-2xl p-4 mb-6 text-xs text-left space-y-2">
+            <div class="flex justify-between">
+                <span class="text-slate-500">Заведение:</span>
+                <span class="font-bold text-white">{{ business.name }}</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-slate-500">Статус точки:</span>
+                <span class="font-bold text-emerald-400">Активна (до {{ paid_until }})</span>
+            </div>
+        </div>
+
+        <div class="space-y-3">
+            <a href="/dashboard/{{ business.id }}" class="block w-full bg-indigo-600 hover:bg-indigo-500 text-white font-extrabold text-xs py-3.5 px-4 rounded-xl shadow-lg shadow-indigo-600/20 transition active:scale-95">
+                Перейти в личный дашборд 📊
+            </a>
+            <a href="/" class="block w-full bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs py-3 px-4 rounded-xl transition">
+                ← На главную страницу
+            </a>
+        </div>
+
+    </div>
+
+</body>
+</html>

@@ -21,7 +21,59 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GeoPulse — Защита рейтинга на Яндекс.Картах и 2ГИС | Умный перехват негатива</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.tailwindcss.com">
+        function openPayModal(planId, planName, price) {
+            document.getElementById('modalPlanId').value = planId;
+            document.getElementById('modalPlanTitle').innerText = planName;
+            document.getElementById('modalPlanPrice').innerText = 'Сумма к оплате: ' + price.toLocaleString('ru-RU') + ' ₽ / 30 дней';
+            document.getElementById('payModal').classList.remove('hidden');
+        }
+
+        function closePayModal() {
+            document.getElementById('payModal').classList.add('hidden');
+        }
+
+        async function submitOnlinePay(e) {
+            e.preventDefault();
+            const btn = document.getElementById('payModalSubmitBtn');
+            const statusDiv = document.getElementById('payModalStatus');
+            btn.disabled = true;
+            btn.innerText = 'Создаем счет...';
+
+            const payload = {
+                business_id: document.getElementById('payBusinessId').value,
+                plan_id: document.getElementById('modalPlanId').value,
+                phone: document.getElementById('payPhone').value,
+                email: document.getElementById('payEmail').value
+            };
+
+            try {
+                const response = await fetch('/api/payments/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json();
+                if (response.ok && data.payment_url) {
+                    window.location.href = data.payment_url;
+                } else {
+                    statusDiv.className = 'p-3 rounded-xl text-xs font-semibold text-center bg-rose-500/10 text-rose-400 border border-rose-500/20';
+                    statusDiv.innerText = data.detail || 'Не удалось сформировать счет. Попробуйте еще раз.';
+                    statusDiv.classList.remove('hidden');
+                    btn.disabled = false;
+                    btn.innerText = 'Перейти к защищенной оплате ➔';
+                }
+            } catch (err) {
+                console.error(err);
+                statusDiv.className = 'p-3 rounded-xl text-xs font-semibold text-center bg-rose-500/10 text-rose-400 border border-rose-500/20';
+                statusDiv.innerText = 'Ошибка связи с сервером платежей.';
+                statusDiv.classList.remove('hidden');
+                btn.disabled = false;
+                btn.innerText = 'Перейти к защищенной оплате ➔';
+            }
+        }
+
+    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -335,9 +387,14 @@
                         <li class="flex items-center gap-2"><span class="text-emerald-400">✔</span> Ответы от ИИ (WhatsApp + Карты)</li>
                     </ul>
                 </div>
-                <a href="#connect" onclick="selectPlan('Тариф «Старт» (1 990 ₽/мес)')" class="mt-8 block w-full text-center bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs py-3 rounded-xl transition">
-                    Попробовать бесплатно
-                </a>
+                <div class="mt-8 space-y-2">
+                    <button type="button" onclick="openPayModal('start', 'Тариф «Старт»', 1990)" class="w-full text-center bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs py-3 rounded-xl transition shadow-lg shadow-indigo-600/20 active:scale-95">
+                        Оплатить онлайн (1 990 ₽) 💳
+                    </button>
+                    <a href="#connect" onclick="selectPlan('Тариф «Старт» (1 990 ₽/мес)')" class="block w-full text-center text-slate-400 hover:text-white text-[11px] underline">
+                        или протестировать 14 дней (0 ₽)
+                    </a>
+                </div>
             </div>
 
             <!-- Тариф 2: Бизнес (Популярный) -->
@@ -360,9 +417,14 @@
                         <li class="flex items-center gap-2"><span class="text-emerald-400">✔</span> Поддержка 2ГИС и Яндекс.Карт</li>
                     </ul>
                 </div>
-                <a href="#connect" onclick="selectPlan('Тариф «Бизнес» (3 900 ₽/мес)')" class="mt-8 block w-full text-center gradient-brand hover:opacity-95 text-white font-bold text-xs py-3.5 rounded-xl shadow-lg transition">
-                    Подключить Бизнес ➔
-                </a>
+                <div class="mt-8 space-y-2">
+                    <button type="button" onclick="openPayModal('business', 'Тариф «Бизнес»', 3900)" class="w-full text-center gradient-brand hover:opacity-95 text-white font-extrabold text-xs py-3.5 rounded-xl shadow-lg shadow-pink-500/25 transition active:scale-95">
+                        Оплатить подписку (3 900 ₽) ➔
+                    </button>
+                    <a href="#connect" onclick="selectPlan('Тариф «Бизнес» (3 900 ₽/мес)')" class="block w-full text-center text-slate-300 hover:text-white text-[11px] underline">
+                        или протестировать 14 дней (0 ₽)
+                    </a>
+                </div>
             </div>
 
             <!-- Тариф 3: Сеть -->
@@ -381,9 +443,14 @@
                         <li class="flex items-center gap-2"><span class="text-emerald-400">✔</span> Оплата по безналичному расчету</li>
                     </ul>
                 </div>
-                <a href="#connect" onclick="selectPlan('Тариф «Сеть» (от 7 900 ₽/мес)')" class="mt-8 block w-full text-center bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs py-3 rounded-xl transition">
-                    Индивидуальный расчет
-                </a>
+                <div class="mt-8 space-y-2">
+                    <button type="button" onclick="openPayModal('network', 'Тариф «Сеть»', 6900)" class="w-full text-center bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs py-3 rounded-xl border border-slate-700 transition active:scale-95">
+                        Оплатить онлайн (6 900 ₽) 💳
+                    </button>
+                    <a href="#connect" onclick="selectPlan('Тариф «Сеть» (6 900 ₽/мес)')" class="block w-full text-center text-slate-400 hover:text-white text-[11px] underline">
+                        или запросить индивидуальный договор
+                    </a>
+                </div>
             </div>
 
         </div>
@@ -599,7 +666,106 @@
                 submitBtn.innerHTML = '<span>Попробовать снова</span>';
             }
         }
+    
+        function openPayModal(planId, planName, price) {
+            document.getElementById('modalPlanId').value = planId;
+            document.getElementById('modalPlanTitle').innerText = planName;
+            document.getElementById('modalPlanPrice').innerText = 'Сумма к оплате: ' + price.toLocaleString('ru-RU') + ' ₽ / 30 дней';
+            document.getElementById('payModal').classList.remove('hidden');
+        }
+
+        function closePayModal() {
+            document.getElementById('payModal').classList.add('hidden');
+        }
+
+        async function submitOnlinePay(e) {
+            e.preventDefault();
+            const btn = document.getElementById('payModalSubmitBtn');
+            const statusDiv = document.getElementById('payModalStatus');
+            btn.disabled = true;
+            btn.innerText = 'Создаем счет...';
+
+            const payload = {
+                business_id: document.getElementById('payBusinessId').value,
+                plan_id: document.getElementById('modalPlanId').value,
+                phone: document.getElementById('payPhone').value,
+                email: document.getElementById('payEmail').value
+            };
+
+            try {
+                const response = await fetch('/api/payments/create', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                const data = await response.json();
+                if (response.ok && data.payment_url) {
+                    window.location.href = data.payment_url;
+                } else {
+                    statusDiv.className = 'p-3 rounded-xl text-xs font-semibold text-center bg-rose-500/10 text-rose-400 border border-rose-500/20';
+                    statusDiv.innerText = data.detail || 'Не удалось сформировать счет. Попробуйте еще раз.';
+                    statusDiv.classList.remove('hidden');
+                    btn.disabled = false;
+                    btn.innerText = 'Перейти к защищенной оплате ➔';
+                }
+            } catch (err) {
+                console.error(err);
+                statusDiv.className = 'p-3 rounded-xl text-xs font-semibold text-center bg-rose-500/10 text-rose-400 border border-rose-500/20';
+                statusDiv.innerText = 'Ошибка связи с сервером платежей.';
+                statusDiv.classList.remove('hidden');
+                btn.disabled = false;
+                btn.innerText = 'Перейти к защищенной оплате ➔';
+            }
+        }
+
     </script>
+
+
+    <!-- Модальное окно онлайн-оплаты тарифа (ЮKassa / Банковский счет) -->
+    <div id="payModal" class="hidden fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl p-6 sm:p-8 max-w-md w-full shadow-2xl relative">
+            <button type="button" onclick="closePayModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white p-2 text-sm font-bold">✕</button>
+            <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[11px] font-bold uppercase mb-3">
+                <span>🔒 Онлайн-оплата</span>
+            </div>
+            <h3 id="modalPlanTitle" class="text-xl font-black text-white mb-1">Оплата подписки</h3>
+            <p id="modalPlanPrice" class="text-xs text-slate-400 mb-5">Сумма к оплате: 1 990 ₽ / месяц</p>
+
+            <form id="onlinePayForm" onsubmit="submitOnlinePay(event)" class="space-y-3.5">
+                <input type="hidden" id="modalPlanId" value="start">
+                
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Заведение (ID или название) *</label>
+                    <select id="payBusinessId" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-3 text-xs text-white focus:outline-none focus:border-indigo-500">
+                        <option value="zerno">Кофейня «Зерно» (демо)</option>
+                        <option value="daikon">Кафе «Daikon» (демо)</option>
+                        <option value="picasso">Парикмахерская «Picasso»</option>
+                        <option value="katoff">Автосервис «Katoff»</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Номер телефона (для чека по 54-ФЗ) *</label>
+                    <input type="tel" id="payPhone" required placeholder="+7 (999) 000-00-00" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Email для фискального чека</label>
+                    <input type="email" id="payEmail" placeholder="director@rest.ru" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-3 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500">
+                </div>
+
+                <div id="payModalStatus" class="hidden p-3 rounded-xl text-xs font-semibold text-center"></div>
+
+                <button type="submit" id="payModalSubmitBtn" class="w-full mt-2 gradient-brand text-white font-extrabold text-xs py-3.5 px-4 rounded-xl shadow-lg transition active:scale-95 flex items-center justify-center gap-2">
+                    <span>Перейти к защищенной оплате</span>
+                    <span>➔</span>
+                </button>
+                <p class="text-[10px] text-center text-slate-500">
+                    Банковские карты Мир/Visa/Mastercard, СБП. Электронный чек отправляется на указанный контакт.
+                </p>
+            </form>
+        </div>
+    </div>
 
 </body>
 </html>

@@ -83,9 +83,37 @@ def init_db():
         );
         """)
 
-        # Миграция: столбец status для businesses
+        # 5. Таблица платежей и подписок (ЮKassa / Банковские счета)
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS payments (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            business_id TEXT NOT NULL,
+            amount INTEGER NOT NULL,
+            plan TEXT NOT NULL,
+            status TEXT DEFAULT 'pending',
+            payment_provider TEXT DEFAULT 'yookassa',
+            provider_payment_id TEXT DEFAULT '',
+            payer_phone TEXT DEFAULT '',
+            payer_email TEXT DEFAULT '',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            paid_at TIMESTAMP,
+            FOREIGN KEY (business_id) REFERENCES businesses (id)
+        );
+        """)
+
+        # Миграция: столбцы status, plan, paid_until для businesses
         try:
             cursor.execute("ALTER TABLE businesses ADD COLUMN status TEXT DEFAULT 'pilot';")
+        except sqlite3.OperationalError:
+            pass
+
+        try:
+            cursor.execute("ALTER TABLE businesses ADD COLUMN plan TEXT DEFAULT 'start';")
+        except sqlite3.OperationalError:
+            pass
+
+        try:
+            cursor.execute("ALTER TABLE businesses ADD COLUMN paid_until TIMESTAMP;")
         except sqlite3.OperationalError:
             pass
 
@@ -99,6 +127,8 @@ def init_db():
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_feedbacks_business ON feedbacks(business_id, created_at DESC);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_owners_biz ON business_owners(business_id);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_leads_created ON leads(created_at DESC);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_payments_biz ON payments(business_id, created_at DESC);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_payments_provider ON payments(provider_payment_id);")
 
         conn.commit()
 
@@ -461,5 +491,74 @@ def unlink_telegram_owner_by_id(record_id: int) -> bool:
         cursor.execute("DELETE FROM business_owners WHERE id = ?;", (record_id,))
         conn.commit()
         return cursor.rowcount > 0
+
+# --- Функции работы с платежами и подписками ---
+
+def create_payment(
+    business_id: str,
+    amount: int,
+    plan: str,
+    provider_payment_id: str,
+    payer_phone: str = "",
+    payer_email: str = "",
+    payment_provider: str = "yookassa"
+) -> int:
+    """Создание записи о планируемом платеже."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+        INSERT INTO payments (business_id, amount, plan, provider_payment_id, payer_phone, payer_email, payment_provider, status)
+        VALUES (?, ?, ?, ?, ?, ?, ?, 'pending');
+        """, (business_id.lower().strip(), amount, plan.strip(), provider_payment_id.strip(), payer_phone.strip(), payer_email.strip(), payment_provider))
+        conn.commit()
+        return cursor.lastrowid
+
+def get_payment_by_provider_id(provider_payment_id: str) -> Optional[Dict[str, Any]]:
+    """Получение платежа по ID провайдера."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM payments WHERE provider_payment_id = ?;", (provider_payment_id.strip(),))
+        row = cursor.fetchone()
+        return dict(row) if row else None
+
+def mark_payment_succeeded(provider_payment_id: str, days: int = 30) -> bool:
+    """Фиксация успешной оплаты и автоматическое продление подписки заведения."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM payments WHERE provider_payment_id = ?;", (provider_payment_id.strip(),))
+        row = cursor.fetchone()
+        if not row:
+            return False
+        
+        payment = dict(row)
+        business_id = payment["business_id"]
+        plan = payment["plan"]
+
+        cursor.execute("""
+        UPDATE payments 
+        SET status = 'succeeded', paid_at = CURRENT_TIMESTAMP 
+        WHERE provider_payment_id = ?;
+        """, (provider_payment_id.strip(),))
+
+        cursor.execute(f"""
+        UPDATE businesses 
+        SET status = 'active', plan = ?, paid_until = datetime(CURRENT_TIMESTAMP, '+{days} days')
+        WHERE id = ?;
+        """, (plan, business_id.lower().strip()))
+
+        conn.commit()
+        return True
+
+def get_recent_payments(limit: int = 50) -> List[Dict[str, Any]]:
+    """Список последних платежей с данными заведений."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+        SELECT p.*, b.name as business_name, b.category as business_category 
+        FROM payments p
+        LEFT JOIN businesses b ON p.business_id = b.id
+        ORDER BY p.created_at DESC LIMIT ?;
+        """, (limit,))
+        return [dict(r) for r in cursor.fetchall()]
 
 

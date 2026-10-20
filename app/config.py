@@ -20,6 +20,35 @@ FOUNDER_TELEGRAM = os.getenv("FOUNDER_TELEGRAM", "mbappeeed")
 # Базовый домен сервиса для формирования внешних ссылок
 BASE_URL = os.getenv("BASE_URL", "https://geopulse-yo8k.onrender.com").rstrip("/")
 
+# Настройки интернет-эквайринга (ЮKassa)
+YOOKASSA_SHOP_ID = os.getenv("YOOKASSA_SHOP_ID", "")
+YOOKASSA_SECRET_KEY = os.getenv("YOOKASSA_SECRET_KEY", "")
+
+# Тарифные планы платформы GeoPulse
+PLANS: Dict[str, Dict[str, Any]] = {
+    "start": {
+        "id": "start",
+        "name": "Тариф «Старт»",
+        "price": 1990,
+        "period": "месяц",
+        "tables": "до 10 столов / мастеров"
+    },
+    "business": {
+        "id": "business",
+        "name": "Тариф «Бизнес»",
+        "price": 3900,
+        "period": "месяц",
+        "tables": "до 30 столов / мастеров"
+    },
+    "network": {
+        "id": "network",
+        "name": "Тариф «Сеть»",
+        "price": 6900,
+        "period": "месяц",
+        "tables": "без ограничений"
+    }
+}
+
 # Настройки доступа в Админ-панель
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "geopulse2026")
