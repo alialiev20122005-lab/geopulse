@@ -118,8 +118,8 @@ async def broadcast_feedback(business_id: str, rating: int, comment: str, contac
                     "url": f"https://wa.me/{digits}?text={wa_encoded_text}"
                 }
             ])
-        elif contact.startswith("@"):
-            tg_username = contact.lstrip("@")
+        elif contact.strip().startswith("@") or "t.me/" in contact.lower():
+            tg_username = contact.strip().replace("https://", "").replace("http://", "").replace("t.me/", "").lstrip("@").strip()
             buttons.append([
                 {
                     "text": "✈️ Написать клиенту в Telegram",

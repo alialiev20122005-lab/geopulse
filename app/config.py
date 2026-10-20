@@ -9,6 +9,10 @@ TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8758602246:AAFglq5spoLAqxp
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "8919849369")
 TELEGRAM_BOT_USERNAME = os.getenv("TELEGRAM_BOT_USERNAME", "my_geopulse_bot")
 
+# Прямые контакты основателя для клиентов и партнеров
+FOUNDER_PHONE = os.getenv("FOUNDER_PHONE", "79038272579")
+FOUNDER_PHONE_DISPLAY = os.getenv("FOUNDER_PHONE_DISPLAY", "+7 (903) 827-25-79")
+
 # Настройки доступа в Админ-панель
 ADMIN_USERNAME = os.getenv("ADMIN_USERNAME", "admin")
 ADMIN_PASSWORD = os.getenv("ADMIN_PASSWORD", "geopulse2026")
