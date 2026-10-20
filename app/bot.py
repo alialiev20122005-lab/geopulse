@@ -107,6 +107,9 @@ async def broadcast_feedback(business_id: str, rating: int, comment: str, contac
     reply_markup = None
     if contact:
         buttons = []
+        clean_contact = contact.strip()
+        is_telegram = clean_contact.startswith("@") or "t.me/" in clean_contact.lower()
+
         # Извлекаем только цифры из телефона
         digits = re.sub(r"\D", "", contact)
         
@@ -116,7 +119,15 @@ async def broadcast_feedback(business_id: str, rating: int, comment: str, contac
         elif len(digits) == 10:
             digits = "7" + digits
 
-        if len(digits) >= 10:
+        if is_telegram:
+            tg_username = clean_contact.replace("https://", "").replace("http://", "").replace("t.me/", "").lstrip("@").strip()
+            buttons.append([
+                {
+                    "text": f"💬 Открыть диалог в Telegram (@{tg_username})",
+                    "url": f"https://t.me/{tg_username}"
+                }
+            ])
+        elif len(digits) >= 10:
             wa_encoded_text = urllib.parse.quote(personal_reply)
             buttons.append([
                 {
@@ -124,14 +135,16 @@ async def broadcast_feedback(business_id: str, rating: int, comment: str, contac
                     "url": f"https://wa.me/{digits}?text={wa_encoded_text}"
                 }
             ])
-        elif contact.strip().startswith("@") or "t.me/" in contact.lower():
-            tg_username = contact.strip().replace("https://", "").replace("http://", "").replace("t.me/", "").lstrip("@").strip()
-            buttons.append([
-                {
-                    "text": "✈️ Написать клиенту в Telegram",
-                    "url": f"https://t.me/{tg_username}"
-                }
-            ])
+        else:
+            # Проверяем, если контакт введен без @ (например: ivan_rest)
+            tg_username = clean_contact.replace("https://", "").replace("http://", "").replace("t.me/", "").lstrip("@").strip()
+            if re.fullmatch(r"[a-zA-Z0-9_]{3,32}", tg_username):
+                buttons.append([
+                    {
+                        "text": f"💬 Открыть диалог в Telegram (@{tg_username})",
+                        "url": f"https://t.me/{tg_username}"
+                    }
+                ])
 
         if buttons:
             reply_markup = {"inline_keyboard": buttons}
