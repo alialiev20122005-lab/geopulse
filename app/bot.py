@@ -13,7 +13,8 @@ from app.database import (
     get_business_chat_ids,
     get_business_stats,
     get_businesses_by_chat_id,
-    get_daily_digest
+    get_daily_digest,
+    get_all_businesses
 )
 
 logger = logging.getLogger("GeoPulseBot")
@@ -220,41 +221,105 @@ async def telegram_polling_loop():
                         text = message["text"].strip()
                         user_name = message["from"].get("first_name", "Управляющий")
 
-                        # 1. Обработка deep-link привязки: /start biz_<id>
-                        if text.startswith("/start biz_"):
-                            business_id = text.replace("/start biz_", "").strip().lower()
-                            business = get_business(business_id)
+                        # 1. Универсальная обработка команды /start
+                        if text.startswith("/start"):
+                            parts = text.split()
+                            raw_param = ""
+                            if len(parts) > 1:
+                                raw_param = parts[1].strip()
+                            elif "@" in parts[0] and len(parts) > 1:
+                                raw_param = parts[1].strip()
 
-                            if business:
-                                link_telegram_owner(business_id, chat_id)
-                                welcome_msg = (
-                                    f"🎉 <b>Поздравляем, {html.escape(user_name)}!</b>\n\n"
-                                    f"Вы успешно подключили уведомления для заведения:\n"
-                                    f"🏢 <b>«{html.escape(business['name'])}»</b>\n"
-                                    f"📍 {html.escape(business['address'])}\n\n"
-                                    f"🔔 <i>Теперь каждое обращение недовольного клиента будет приходить лично вам за 1 секунду.</i>\n\n"
-                                    f"Команды:\n"
-                                    f"📊 /stats — статистика вашего заведения"
-                                )
-                                mgr_token = get_manager_token(business_id)
-                                welcome_markup = {
-                                    "inline_keyboard": [[
-                                        {"text": "📊 Открыть личный дашборд", "url": f"{BASE_URL}/dashboard/{business_id}?auth={mgr_token}"}
-                                    ]]
-                                }
-                                await send_message(chat_id, welcome_msg, reply_markup=welcome_markup)
+                            # Очищаем параметр от суффикса @bot_username
+                            if "@" in raw_param:
+                                raw_param = raw_param.split("@")[0].strip()
+
+                            if raw_param:
+                                # Очищаем возможный префикс biz_ или biz-
+                                clean_id = raw_param
+                                if clean_id.lower().startswith("biz_"):
+                                    clean_id = clean_id[4:]
+                                elif clean_id.lower().startswith("biz-"):
+                                    clean_id = clean_id[4:]
+                                clean_id = clean_id.strip().lower()
+
+                                # Проверяем варианты: clean_id, raw_param, biz_clean_id
+                                candidate_ids = [clean_id, raw_param.strip().lower(), f"biz_{clean_id}"]
+                                business = None
+                                for cid in candidate_ids:
+                                    if cid:
+                                        b = get_business(cid)
+                                        if b:
+                                            business = b
+                                            break
+
+                                # Поиск по названию (регистронезависимо)
+                                if not business:
+                                    all_b = get_all_businesses()
+                                    for b in all_b:
+                                        if b["id"].lower() == clean_id or b["name"].lower().strip() == clean_id:
+                                            business = b
+                                            break
+
+                                if business:
+                                    link_telegram_owner(business["id"], chat_id)
+                                    welcome_msg = (
+                                        f"🎉 <b>Поздравляем, {html.escape(user_name)}!</b>\n\n"
+                                        f"Вы успешно подключили уведомления для заведения:\n"
+                                        f"🏢 <b>«{html.escape(business['name'])}»</b>\n"
+                                        f"📍 {html.escape(business['address'])}\n\n"
+                                        f"🔔 <i>Теперь каждое обращение недовольного клиента будет приходить лично вам за 1 секунду.</i>\n\n"
+                                        f"Команды:\n"
+                                        f"📊 /stats — статистика вашего заведения\n"
+                                        f"📈 /digest — суточный дайджест"
+                                    )
+                                    mgr_token = get_manager_token(business["id"])
+                                    welcome_markup = {
+                                        "inline_keyboard": [[
+                                            {"text": "📊 Открыть личный дашборд", "url": f"{BASE_URL}/dashboard/{business['id']}?auth={mgr_token}"}
+                                        ]]
+                                    }
+                                    await send_message(chat_id, welcome_msg, reply_markup=welcome_markup)
+                                else:
+                                    all_b = get_all_businesses()
+                                    biz_lines = [f"• <b>{html.escape(b['name'])}</b>: <code>/start biz_{b['id']}</code>" for b in all_b[:5]]
+                                    list_str = "\n".join(biz_lines) if biz_lines else "Пока нет добавленных заведений."
+                                    help_msg = (
+                                        f"❌ <b>Заведение с кодом «{html.escape(raw_param)}» не найдено в базе.</b>\n\n"
+                                        f"<b>Возможные причины:</b>\n"
+                                        f"1. Заведение создано на локальном сервере, а бот подключен к облачной базе Render.\n"
+                                        f"2. Опечатка в ID (проверьте ID в панели управления).\n\n"
+                                        f"<b>Доступные заведения:</b>\n"
+                                        f"{list_str}\n\n"
+                                        f"💡 <i>Нажмите на команду вида <code>/start biz_...</code> выше, чтобы подключить его.</i>"
+                                    )
+                                    await send_message(chat_id, help_msg)
+
                             else:
-                                await send_message(chat_id, "❌ Заведение с таким идентификатором не найдено.")
-
-                        # 2. Обычный старт
-                        elif text == "/start":
-                            msg = (
-                                f"👋 Привет, {html.escape(user_name)}!\n\n"
-                                f"Я официальный бот платформы <b>GeoPulse</b>.\n"
-                                f"Я защищаю рейтинги заведений на Яндекс.Картах и передаю жалобы клиентов напрямую руководству.\n\n"
-                                f"Чтобы привязать свое заведение, добавьте его на сайте и нажмите кнопку «Подключить Telegram»."
-                            )
-                            await send_message(chat_id, msg)
+                                # Обычный старт без параметров
+                                my_businesses = get_businesses_by_chat_id(chat_id)
+                                if my_businesses:
+                                    linked_str = ", ".join([f"«{html.escape(b['name'])}»" for b in my_businesses])
+                                    msg = (
+                                        f"👋 С возвращением, {html.escape(user_name)}!\n\n"
+                                        f"Вы привязаны к заведениям: <b>{linked_str}</b>.\n\n"
+                                        f"Команды:\n"
+                                        f"📊 /stats — статистика обращений\n"
+                                        f"📈 /digest — отчет за последние 24 часа"
+                                    )
+                                else:
+                                    all_b = get_all_businesses()
+                                    biz_lines = [f"• <b>{html.escape(b['name'])}</b>: <code>/start biz_{b['id']}</code>" for b in all_b[:5]]
+                                    list_str = "\n".join(biz_lines) if biz_lines else "Пока нет добавленных заведений."
+                                    msg = (
+                                        f"👋 Привет, {html.escape(user_name)}!\n\n"
+                                        f"Я официальный бот платформы <b>GeoPulse</b>.\n"
+                                        f"Я защищаю рейтинги заведений на Яндекс.Картах и передаю жалобы клиентов напрямую руководству.\n\n"
+                                        f"<b>Как подключить заведение:</b>\n"
+                                        f"Нажмите ссылку в личном кабинете или отправьте команду:\n"
+                                        f"{list_str}"
+                                    )
+                                await send_message(chat_id, msg)
 
                         # 3. Динамическая статистика привязанных заведений
                         elif text.startswith("/stats"):
