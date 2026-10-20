@@ -12,7 +12,8 @@ from app.database import (
     get_business,
     get_business_chat_ids,
     get_business_stats,
-    get_businesses_by_chat_id
+    get_businesses_by_chat_id,
+    get_daily_digest
 )
 
 logger = logging.getLogger("GeoPulseBot")
@@ -156,6 +157,43 @@ async def broadcast_feedback(business_id: str, rating: int, comment: str, contac
 
     return success_count
 
+def generate_digest_text(business_id: Optional[str] = None, business_name: Optional[str] = None) -> str:
+    """Генерация текста суточного отчета для Telegram."""
+    digest = get_daily_digest(business_id)
+    now_str = datetime.now().strftime("%d.%m.%Y %H:%M")
+    
+    if business_name:
+        title = f"📊 <b>СУТОЧНЫЙ ДАЙДЖЕСТ: {html.escape(business_name)}</b>"
+    else:
+        title = "🌐 <b>ГЛОБАЛЬНЫЙ ДАЙДЖЕСТ GEOPULSE (24 ЧАСА)</b>"
+
+    total = digest["total_24h"]
+    avg_r = digest["avg_rating_24h"]
+    neg = digest["negative_24h"]
+    pos = digest["positive_24h"]
+    unres = digest["unresolved_24h"]
+    leads = digest["new_leads_24h"]
+
+    lines = [
+        title,
+        f"🕒 <i>Данные на {now_str}</i>\n",
+        f"📝 Новых отзывов за 24 ч: <b>{total}</b>",
+        f"⭐ Средняя оценка: <b>{avg_r} / 5.0</b>",
+        f"💚 Положительных (4-5★): <b>{pos}</b>",
+        f"🚨 Перехвачено негатива: <b>{neg}</b>",
+    ]
+
+    if unres > 0:
+        lines.append(f"⚠️ <b>Требуют ответа управляющего: {unres} 🔴</b>")
+    else:
+        lines.append("✅ Все инциденты урегулированы!")
+
+    if not business_id and leads > 0:
+        lines.append(f"\n🎯 <b>Новых заявок на пилот: {leads}</b>")
+
+    lines.append("\n💡 <i>Отслеживайте динамику в режиме реального времени на платформе.</i>")
+    return "\n".join(lines)
+
 async def telegram_polling_loop():
     """Фоновый цикл приема сообщений от Telegram с защитой от циклических сбоев."""
     if not TELEGRAM_BOT_TOKEN:
@@ -251,6 +289,30 @@ async def telegram_polling_loop():
                                         ]]
                                     }
                                     await send_message(chat_id, stat_msg, reply_markup=stat_markup)
+
+                        # 4. Суточный дайджест за 24 часа: /digest
+                        elif text.startswith("/digest"):
+                            if chat_id == TELEGRAM_CHAT_ID:
+                                global_text = generate_digest_text()
+                                await send_message(chat_id, global_text)
+                            
+                            my_businesses = get_businesses_by_chat_id(chat_id)
+                            if my_businesses:
+                                for b in my_businesses[:5]:
+                                    b_text = generate_digest_text(business_id=b["id"], business_name=b["name"])
+                                    mgr_token = get_manager_token(b["id"])
+                                    digest_markup = {
+                                        "inline_keyboard": [[
+                                            {"text": "📊 Дашборд заведения", "url": f"{BASE_URL}/dashboard/{b['id']}?auth={mgr_token}"}
+                                        ]]
+                                    }
+                                    await send_message(chat_id, b_text, reply_markup=digest_markup)
+                            elif chat_id != TELEGRAM_CHAT_ID:
+                                await send_message(
+                                    chat_id,
+                                    "⚠️ <b>Вы еще не привязаны ни к одному заведению.</b>\n\n"
+                                    "Привяжите заведение через кнопку «Подключить Telegram» в личном кабинете."
+                                )
                 else:
                     logger.warning(f"Telegram polling status {resp.status_code}. Sleeping 5s before retry.")
                     await asyncio.sleep(5)

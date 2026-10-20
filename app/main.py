@@ -1,3 +1,4 @@
+import csv
 import io
 import json
 import logging
@@ -51,7 +52,10 @@ from app.database import (
     update_feedback_status,
     get_feedback_by_id,
     get_payment_by_provider_id,
-    mark_payment_succeeded
+    mark_payment_succeeded,
+    get_business_rating_breakdown,
+    get_feedbacks_for_export,
+    get_daily_digest
 )
 from app.bot import broadcast_feedback, telegram_polling_loop, send_message, get_manager_token
 from app.admin import is_admin
@@ -231,6 +235,7 @@ async def dashboard_page(business_id: str, request: Request, auth: Optional[str]
         )
 
     stats_info = get_business_stats(business_id)
+    breakdown = get_business_rating_breakdown(business_id)
     owners = get_business_chat_ids(business_id)
     telegram_deep_link = f"https://t.me/{TELEGRAM_BOT_USERNAME}?start=biz_{business_id}"
 
@@ -241,6 +246,7 @@ async def dashboard_page(business_id: str, request: Request, auth: Optional[str]
             "business": business,
             "stats": stats_info["stats"],
             "feedbacks": stats_info["feedbacks"],
+            "breakdown": breakdown,
             "owner_count": len(owners),
             "telegram_deep_link": telegram_deep_link
         }
@@ -257,6 +263,41 @@ async def dashboard_page(business_id: str, request: Request, auth: Optional[str]
         )
 
     return response
+
+@app.get("/dashboard/{business_id}/export")
+async def export_business_feedbacks(business_id: str, request: Request, auth: Optional[str] = None):
+    """Выгрузка отзывов заведения в CSV (Excel-совместимый UTF-8 с BOM)."""
+    business = get_business(business_id)
+    if not business:
+        raise HTTPException(status_code=404, detail="Заведение не найдено")
+
+    if not is_manager_authorized(business_id, request, auth):
+        raise HTTPException(status_code=403, detail="Доступ запрещен. Требуется авторизация управляющего.")
+
+    feedbacks = get_feedbacks_for_export(business_id)
+    output = io.StringIO()
+    writer = csv.writer(output, delimiter=";", quoting=csv.QUOTE_MINIMAL)
+    writer.writerow(["ID", "Заведение", "Дата и время", "Оценка (1-5)", "Столик", "Отзыв / Претензия", "Контакты клиента", "Статус"])
+
+    for f in feedbacks:
+        writer.writerow([
+            f.get("id", ""),
+            f.get("business_name", business["name"]),
+            f.get("created_at", ""),
+            f.get("rating", ""),
+            f.get("table_number", ""),
+            (f.get("comment", "") or "").replace("\r\n", " ").replace("\n", " "),
+            f.get("contact", ""),
+            "Урегулировано" if f.get("status") == "resolved" else "В работе"
+        ])
+
+    csv_data = "\ufeff" + output.getvalue()
+    filename = f"geopulse_reviews_{business_id}_{datetime.now().strftime('%Y%m%d')}.csv"
+    return Response(
+        content=csv_data.encode("utf-8-sig"),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+    )
 
 @app.post("/dashboard/{business_id}/unlock")
 async def unlock_dashboard(business_id: str, request: Request, access_code: str = Form(...)):
@@ -691,4 +732,22 @@ async def payment_success_page(request: Request, bid: str = "daikon", plan: str 
             "paid_until": paid_until
         }
     )
+
+@app.get("/sales-kit", response_class=HTMLResponse)
+async def sales_kit_page(request: Request):
+    """Скрипты продаж, шаблоны обращений к владельцам заведений и чек-лист пилота."""
+    return templates.TemplateResponse(
+        request=request,
+        name="sales_kit.html",
+        context={
+            "founder_phone": FOUNDER_PHONE,
+            "plans": PLANS
+        }
+    )
+
+@app.get("/api/digest")
+async def get_daily_digest_api(business_id: Optional[str] = None):
+    """API получения суточного дайджеста для заведения или всей платформы."""
+    return get_daily_digest(business_id)
+
 

@@ -10,8 +10,14 @@
             <h1 class="text-2xl sm:text-3xl font-black text-white tracking-tight">Воронка заявок на 14-дневный пилот</h1>
             <p class="text-xs sm:text-sm text-slate-400 font-medium">CRM-управление потенциальными клиентами с сайта и коммерческого предложения</p>
         </div>
-        <div class="text-xs text-slate-400 bg-slate-900 px-3.5 py-2 rounded-xl border border-slate-800 self-start sm:self-auto">
-            Всего заявок: <b class="text-white">{{ leads | length }}</b>
+        <div class="flex items-center gap-3">
+            <div class="text-xs text-slate-400 bg-slate-900 px-3.5 py-2 rounded-xl border border-slate-800 self-start sm:self-auto">
+                Всего заявок: <b class="text-white">{{ leads | length }}</b>
+            </div>
+            <a href="/admin/leads/export" class="inline-flex items-center gap-1.5 px-3.5 py-2 bg-slate-900 hover:bg-slate-800 border border-slate-800 text-slate-200 hover:text-white font-semibold rounded-xl text-xs transition shadow-sm">
+                <span>📥</span>
+                <span>Экспорт CSV</span>
+            </a>
         </div>
     </div>
 

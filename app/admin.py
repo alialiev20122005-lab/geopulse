@@ -1,10 +1,13 @@
+import csv
 import hashlib
+import io
 import logging
 import re
 import secrets
+from datetime import datetime
 from typing import Optional
 from fastapi import APIRouter, Request, Form, HTTPException, Depends
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, Response
 from fastapi.templating import Jinja2Templates
 
 from app.config import (
@@ -26,7 +29,9 @@ from app.database import (
     delete_lead,
     get_all_feedbacks_filtered,
     get_all_managers,
-    unlink_telegram_owner_by_id
+    unlink_telegram_owner_by_id,
+    get_feedbacks_for_export,
+    get_leads_for_export
 )
 
 logger = logging.getLogger("GeoPulseAdmin")
@@ -282,6 +287,46 @@ async def admin_delete_lead(request: Request, lead_id: int):
     delete_lead(lead_id)
     return RedirectResponse(url="/admin/leads?msg=Заявка+удалена", status_code=303)
 
+@router.get("/leads/export")
+async def admin_export_leads(request: Request):
+    """Экспорт всех заявок воронки в CSV (Excel-совместимый UTF-8 с BOM)."""
+    if not is_admin(request):
+        return RedirectResponse(url="/admin/login", status_code=303)
+
+    leads = get_leads_for_export()
+    output = io.StringIO()
+    writer = csv.writer(output, delimiter=";", quoting=csv.QUOTE_MINIMAL)
+    writer.writerow(["ID", "Дата заявки", "Имя контакта", "Заведение", "Телефон", "Город", "Столов/мастеров", "Источник", "Статус"])
+
+    status_labels = {
+        "new": "Новая",
+        "contacted": "В диалоге",
+        "pilot_started": "Пилот запущен",
+        "paid": "Оплачено",
+        "rejected": "Отказ"
+    }
+
+    for l in leads:
+        writer.writerow([
+            l.get("id", ""),
+            l.get("created_at", ""),
+            l.get("name", ""),
+            l.get("business_name", ""),
+            l.get("phone", ""),
+            l.get("city", ""),
+            l.get("tables_count", ""),
+            l.get("source", ""),
+            status_labels.get(l.get("status"), l.get("status", ""))
+        ])
+
+    csv_data = "\ufeff" + output.getvalue()
+    filename = f"geopulse_leads_{datetime.now().strftime('%Y%m%d')}.csv"
+    return Response(
+        content=csv_data.encode("utf-8-sig"),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
+    )
+
 # --- 5. Единая лента отзывов ---
 
 @router.get("/reviews", response_class=HTMLResponse)
@@ -311,6 +356,39 @@ async def admin_reviews_page(
             "msg": request.query_params.get("msg"),
             "err": request.query_params.get("err")
         }
+    )
+
+@router.get("/reviews/export")
+async def admin_export_reviews(request: Request, business: Optional[str] = "all"):
+    """Экспорт отзывов всех заведений в CSV (Excel-совместимый UTF-8 с BOM)."""
+    if not is_admin(request):
+        return RedirectResponse(url="/admin/login", status_code=303)
+
+    bid = None if (not business or business == "all") else business
+    feedbacks = get_feedbacks_for_export(bid)
+
+    output = io.StringIO()
+    writer = csv.writer(output, delimiter=";", quoting=csv.QUOTE_MINIMAL)
+    writer.writerow(["ID", "Заведение", "Дата и время", "Оценка (1-5)", "Столик", "Отзыв / Претензия", "Контакты клиента", "Статус"])
+
+    for f in feedbacks:
+        writer.writerow([
+            f.get("id", ""),
+            f.get("business_name", ""),
+            f.get("created_at", ""),
+            f.get("rating", ""),
+            f.get("table_number", ""),
+            (f.get("comment", "") or "").replace("\r\n", " ").replace("\n", " "),
+            f.get("contact", ""),
+            "Урегулировано" if f.get("status") == "resolved" else "В работе"
+        ])
+
+    csv_data = "\ufeff" + output.getvalue()
+    filename = f"geopulse_all_reviews_{datetime.now().strftime('%Y%m%d')}.csv"
+    return Response(
+        content=csv_data.encode("utf-8-sig"),
+        media_type="text/csv; charset=utf-8",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'}
     )
 
 # --- 6. Менеджеры Telegram ---

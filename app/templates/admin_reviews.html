@@ -31,16 +31,23 @@
             </a>
         </div>
 
-        <!-- Селектор заведения -->
-        <form method="GET" action="/admin/reviews" class="flex items-center gap-2">
-            <input type="hidden" name="rating" value="{{ selected_rating }}">
-            <select name="business" onchange="this.form.submit()" class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500 font-semibold cursor-pointer">
-                <option value="all" {% if selected_business == 'all' %}selected{% endif %}>🏢 Все заведения</option>
-                {% for b in businesses %}
-                <option value="{{ b.id }}" {% if selected_business == b.id %}selected{% endif %}>{{ b.name }}</option>
-                {% endfor %}
-            </select>
-        </form>
+        <!-- Селектор заведения и Экспорт -->
+        <div class="flex items-center gap-3">
+            <form method="GET" action="/admin/reviews" class="flex items-center gap-2">
+                <input type="hidden" name="rating" value="{{ selected_rating }}">
+                <select name="business" onchange="this.form.submit()" class="bg-slate-950 border border-slate-800 rounded-xl px-3 py-1.5 text-xs text-white focus:outline-none focus:border-indigo-500 font-semibold cursor-pointer">
+                    <option value="all" {% if selected_business == 'all' %}selected{% endif %}>🏢 Все заведения</option>
+                    {% for b in businesses %}
+                    <option value="{{ b.id }}" {% if selected_business == b.id %}selected{% endif %}>{{ b.name }}</option>
+                    {% endfor %}
+                </select>
+            </form>
+
+            <a href="/admin/reviews/export?business={{ selected_business }}" class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-950 hover:bg-slate-800 border border-slate-800 text-slate-200 hover:text-white font-semibold rounded-xl text-xs transition shadow-sm">
+                <span>📥</span>
+                <span>Экспорт CSV</span>
+            </a>
+        </div>
 
     </div>
 

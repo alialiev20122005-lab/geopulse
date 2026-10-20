@@ -561,4 +561,111 @@ def get_recent_payments(limit: int = 50) -> List[Dict[str, Any]]:
         """, (limit,))
         return [dict(r) for r in cursor.fetchall()]
 
+# --- Продвинутая аналитика, экспорт данных и дайджесты ---
+
+def get_business_rating_breakdown(business_id: str) -> Dict[str, Any]:
+    """Детальное распределение оценок (1-5 звезд) и расчет индекса лояльности NPS."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+        SELECT rating, COUNT(*) as cnt
+        FROM feedbacks
+        WHERE business_id = ?
+        GROUP BY rating;
+        """, (business_id.lower().strip(),))
+        
+        counts = {1: 0, 2: 0, 3: 0, 4: 0, 5: 0}
+        for row in cursor.fetchall():
+            r = int(row["rating"])
+            if 1 <= r <= 5:
+                counts[r] = int(row["cnt"])
+
+        total = sum(counts.values())
+        percentages = {
+            r: round((counts[r] / total) * 100) if total > 0 else 0
+            for r in range(1, 6)
+        }
+
+        detractors = counts[1] + counts[2] + counts[3]
+        promoters = counts[4] + counts[5]
+        nps = round(((promoters - detractors) / total) * 100) if total > 0 else 100
+
+        return {
+            "counts": counts,
+            "percentages": percentages,
+            "total": total,
+            "promoters": promoters,
+            "detractors": detractors,
+            "nps": nps
+        }
+
+def get_feedbacks_for_export(business_id: Optional[str] = None) -> List[Dict[str, Any]]:
+    """Выгрузка всех отзывов для генерации CSV файла."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        if business_id:
+            cursor.execute("""
+            SELECT f.id, b.name as business_name, f.rating, f.table_number, f.comment, f.contact, f.status, f.created_at
+            FROM feedbacks f
+            LEFT JOIN businesses b ON f.business_id = b.id
+            WHERE f.business_id = ?
+            ORDER BY f.created_at DESC;
+            """, (business_id.lower().strip(),))
+        else:
+            cursor.execute("""
+            SELECT f.id, b.name as business_name, f.rating, f.table_number, f.comment, f.contact, f.status, f.created_at
+            FROM feedbacks f
+            LEFT JOIN businesses b ON f.business_id = b.id
+            ORDER BY f.created_at DESC;
+            """)
+        return [dict(r) for r in cursor.fetchall()]
+
+def get_leads_for_export() -> List[Dict[str, Any]]:
+    """Выгрузка всех лидов для генерации CSV файла."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+        SELECT id, name, business_name, phone, city, tables_count, source, status, created_at
+        FROM leads
+        ORDER BY created_at DESC;
+        """)
+        return [dict(r) for r in cursor.fetchall()]
+
+def get_daily_digest(business_id: Optional[str] = None) -> Dict[str, Any]:
+    """Сводка ключевых показателей за последние 24 часа для Telegram-дайджеста."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        base_filter = "datetime(f.created_at) >= datetime('now', '-1 day')"
+        params = []
+        if business_id:
+            base_filter += " AND f.business_id = ?"
+            params.append(business_id.lower().strip())
+
+        cursor.execute(f"""
+        SELECT 
+            COUNT(*) as total_24h,
+            AVG(f.rating) as avg_rating_24h,
+            SUM(CASE WHEN f.rating <= 3 THEN 1 ELSE 0 END) as negative_24h,
+            SUM(CASE WHEN f.rating >= 4 THEN 1 ELSE 0 END) as positive_24h,
+            SUM(CASE WHEN f.rating <= 3 AND f.status != 'resolved' THEN 1 ELSE 0 END) as unresolved_24h
+        FROM feedbacks f
+        WHERE {base_filter};
+        """, params)
+        fb_stats = dict(cursor.fetchone())
+
+        cursor.execute("""
+        SELECT COUNT(*) FROM leads WHERE datetime(created_at) >= datetime('now', '-1 day');
+        """)
+        new_leads_24h = cursor.fetchone()[0]
+
+        return {
+            "total_24h": fb_stats["total_24h"] or 0,
+            "avg_rating_24h": round(fb_stats["avg_rating_24h"] or 5.0, 1),
+            "negative_24h": fb_stats["negative_24h"] or 0,
+            "positive_24h": fb_stats["positive_24h"] or 0,
+            "unresolved_24h": fb_stats["unresolved_24h"] or 0,
+            "new_leads_24h": new_leads_24h or 0
+        }
+
+
 

@@ -283,6 +283,64 @@ async def run_tests():
         assert zerno.get("status") == "active"
         print("  -> Business status successfully transitioned from 'pilot' to 'active' in DB!")
 
+        # ---------------------------------------------------------
+        # TEST 12: Stage 4 - Advanced Analytics, CSV Exports, Sales Kit, Digests
+        # ---------------------------------------------------------
+        print("\n[TEST 12] Verifying Analytics, CSV Exports, Sales Kit, and Digests...")
+
+        # 1. Rating breakdown & NPS in DB
+        breakdown = db.get_business_rating_breakdown("zerno")
+        assert "counts" in breakdown
+        assert "percentages" in breakdown
+        assert "nps" in breakdown
+        assert breakdown["total"] >= 1
+        print(f"  -> NPS calculation verified: {breakdown['nps']}% (Promoters: {breakdown['promoters']}, Detractors: {breakdown['detractors']})")
+
+        # 2. Manager reviews CSV export
+        resp = await client.get("/dashboard/zerno/export")
+        assert resp.status_code == 200
+        assert "text/csv" in resp.headers.get("content-type", "")
+        assert "attachment" in resp.headers.get("content-disposition", "")
+        assert "Оценка (1-5)" in resp.text
+        print("  -> Manager reviews CSV export generated successfully (UTF-8 with BOM for Excel)!")
+
+        # 3. Admin reviews CSV export (requires admin session)
+        resp_unauth = await client.get("/admin/reviews/export", follow_redirects=False)
+        assert resp_unauth.status_code == 303
+        print("  -> Unauthenticated /admin/reviews/export safely redirected to login!")
+
+        resp = await client.get("/admin/reviews/export", cookies={"geopulse_admin_session": admin_cookie})
+        assert resp.status_code == 200
+        assert "text/csv" in resp.headers.get("content-type", "")
+        assert "attachment" in resp.headers.get("content-disposition", "")
+        print("  -> Authenticated Admin all-reviews CSV export generated successfully!")
+
+        # 4. Admin leads CSV export (requires admin session)
+        resp = await client.get("/admin/leads/export", cookies={"geopulse_admin_session": admin_cookie})
+        assert resp.status_code == 200
+        assert "text/csv" in resp.headers.get("content-type", "")
+        assert "Дата заявки" in resp.text
+        print("  -> Authenticated Admin leads CSV export generated successfully!")
+
+        # 5. Sales Kit page
+        resp = await client.get("/sales-kit")
+        assert resp.status_code == 200
+        assert "Скрипты, шаблоны сообщений и чек-лист пилота" in resp.text
+        print("  -> /sales-kit rendered successfully with 200 OK!")
+
+        # 6. Daily digest generation
+        from app.bot import generate_digest_text
+        digest_text = generate_digest_text("zerno", "Кофейня Зерно")
+        assert "СУТОЧНЫЙ ДАЙДЖЕСТ" in digest_text
+        print("  -> Telegram daily digest generated cleanly!")
+
+        # 7. Digest API endpoint
+        resp = await client.get("/api/digest")
+        assert resp.status_code == 200
+        data = resp.json()
+        assert "total_24h" in data
+        print("  -> /api/digest endpoint returned 200 OK with valid metrics!")
+
     print("\n=== ALL AUDIT & REGRESSION TESTS PASSED (100% SUCCESS) ===")
 
 if __name__ == "__main__":
