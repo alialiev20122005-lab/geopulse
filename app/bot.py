@@ -226,38 +226,35 @@ async def telegram_polling_loop():
                             parts = text.split()
                             raw_param = ""
                             if len(parts) > 1:
-                                raw_param = parts[1].strip()
-                            elif "@" in parts[0] and len(parts) > 1:
-                                raw_param = parts[1].strip()
+                                raw_param = " ".join(parts[1:]).strip()
 
                             # Очищаем параметр от суффикса @bot_username
                             if "@" in raw_param:
                                 raw_param = raw_param.split("@")[0].strip()
 
                             if raw_param:
-                                # Очищаем возможный префикс biz_ или biz-
-                                clean_id = raw_param
-                                if clean_id.lower().startswith("biz_"):
-                                    clean_id = clean_id[4:]
-                                elif clean_id.lower().startswith("biz-"):
-                                    clean_id = clean_id[4:]
-                                clean_id = clean_id.strip().lower()
+                                clean_search = raw_param.lower().strip()
+                                if clean_search.startswith("biz_"):
+                                    clean_search = clean_search[4:].strip()
+                                elif clean_search.startswith("biz-"):
+                                    clean_search = clean_search[4:].strip()
 
-                                # Проверяем варианты: clean_id, raw_param, biz_clean_id
-                                candidate_ids = [clean_id, raw_param.strip().lower(), f"biz_{clean_id}"]
+                                all_b = get_all_businesses()
                                 business = None
-                                for cid in candidate_ids:
-                                    if cid:
-                                        b = get_business(cid)
-                                        if b:
-                                            business = b
-                                            break
 
-                                # Поиск по названию (регистронезависимо)
+                                # Сначала точное совпадение по ID
+                                for b in all_b:
+                                    b_id = b["id"].lower().strip()
+                                    if b_id == clean_search or f"biz_{b_id}" == clean_search:
+                                        business = b
+                                        break
+
+                                # Если не найдено — поиск по названию или подстроке
                                 if not business:
-                                    all_b = get_all_businesses()
                                     for b in all_b:
-                                        if b["id"].lower() == clean_id or b["name"].lower().strip() == clean_id:
+                                        b_id = b["id"].lower().strip()
+                                        b_name = b["name"].lower().strip()
+                                        if clean_search in b_name or b_name in clean_search or clean_search in b_id:
                                             business = b
                                             break
 
@@ -282,13 +279,13 @@ async def telegram_polling_loop():
                                     await send_message(chat_id, welcome_msg, reply_markup=welcome_markup)
                                 else:
                                     all_b = get_all_businesses()
-                                    biz_lines = [f"• <b>{html.escape(b['name'])}</b>: <code>/start biz_{b['id']}</code>" for b in all_b[:5]]
+                                    biz_lines = [f"• <b>{html.escape(b['name'])}</b>: <code>/start biz_{b['id']}</code>" for b in all_b[:6]]
                                     list_str = "\n".join(biz_lines) if biz_lines else "Пока нет добавленных заведений."
                                     help_msg = (
-                                        f"❌ <b>Заведение с кодом «{html.escape(raw_param)}» не найдено в базе.</b>\n\n"
+                                        f"❌ <b>Заведение по запросу «{html.escape(raw_param)}» не найдено в базе.</b>\n\n"
                                         f"<b>Возможные причины:</b>\n"
                                         f"1. Заведение создано на локальном сервере, а бот подключен к облачной базе Render.\n"
-                                        f"2. Опечатка в ID (проверьте ID в панели управления).\n\n"
+                                        f"2. Опечатка в ID или названии.\n\n"
                                         f"<b>Доступные заведения:</b>\n"
                                         f"{list_str}\n\n"
                                         f"💡 <i>Нажмите на команду вида <code>/start biz_...</code> выше, чтобы подключить его.</i>"
@@ -309,7 +306,7 @@ async def telegram_polling_loop():
                                     )
                                 else:
                                     all_b = get_all_businesses()
-                                    biz_lines = [f"• <b>{html.escape(b['name'])}</b>: <code>/start biz_{b['id']}</code>" for b in all_b[:5]]
+                                    biz_lines = [f"• <b>{html.escape(b['name'])}</b>: <code>/start biz_{b['id']}</code>" for b in all_b[:6]]
                                     list_str = "\n".join(biz_lines) if biz_lines else "Пока нет добавленных заведений."
                                     msg = (
                                         f"👋 Привет, {html.escape(user_name)}!\n\n"
@@ -378,6 +375,34 @@ async def telegram_polling_loop():
                                     "⚠️ <b>Вы еще не привязаны ни к одному заведению.</b>\n\n"
                                     "Привяжите заведение через кнопку «Подключить Telegram» в личном кабинете."
                                 )
+
+                        # 5. Свободный ввод (поиск по названию если прислали просто имя точки)
+                        else:
+                            all_b = get_all_businesses()
+                            found_b = None
+                            clean_t = text.lower().strip()
+                            for b in all_b:
+                                b_id = b["id"].lower().strip()
+                                b_name = b["name"].lower().strip()
+                                if clean_t in b_name or b_name in clean_t or clean_t == b_id:
+                                    found_b = b
+                                    break
+                            
+                            if found_b:
+                                link_telegram_owner(found_b["id"], chat_id)
+                                mgr_token = get_manager_token(found_b["id"])
+                                match_msg = (
+                                    f"✅ <b>Заведение найдено и успешно подключено!</b>\n\n"
+                                    f"🏢 <b>«{html.escape(found_b['name'])}»</b>\n"
+                                    f"📍 {html.escape(found_b['address'])}\n\n"
+                                    f"🔔 <i>Теперь каждое обращение недовольного клиента будет приходить лично вам за 1 секунду.</i>"
+                                )
+                                match_markup = {
+                                    "inline_keyboard": [[
+                                        {"text": "📊 Открыть личный дашборд", "url": f"{BASE_URL}/dashboard/{found_b['id']}?auth={mgr_token}"}
+                                    ]]
+                                }
+                                await send_message(chat_id, match_msg, reply_markup=match_markup)
                 else:
                     logger.warning(f"Telegram polling status {resp.status_code}. Sleeping 5s before retry.")
                     await asyncio.sleep(5)
