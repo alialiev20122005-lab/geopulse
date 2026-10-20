@@ -1,0 +1,12 @@
+.env
+.git
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.db-wal
+*.db-shm
+.pytest_cache
+cloudflared.exe
+tests/__pycache__

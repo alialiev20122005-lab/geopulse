@@ -8,8 +8,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./geopulse.db:/app/geopulse.db
-      - ./feedbacks.jsonl:/app/feedbacks.jsonl
+      - geopulse_data:/app/data
 
   # Автоматический HTTPS реверс-прокси (Caddy)
   # Выпускает бесплатный Let's Encrypt SSL сертификат на любой домен без ручных настроек
@@ -28,5 +27,6 @@ services:
       - web
 
 volumes:
+  geopulse_data:
   caddy_data:
   caddy_config:

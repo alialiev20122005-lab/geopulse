@@ -1,12 +1,15 @@
 import os
 from typing import Dict, Any
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except ImportError:
+    pass
 
 # Настройки Telegram
-# Чтобы получать уведомления в Telegram:
-# 1. Создайте бота в @BotFather в Telegram и скопируйте токен сюда (или в переменную окружения TELEGRAM_BOT_TOKEN)
-# 2. Узнайте свой chat_id через бота @userinfobot и вставьте сюда (или в TELEGRAM_CHAT_ID)
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8758602246:AAFglq5spoLAqxpo4FwmZ92qmnKjeVV7d2E")
-TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "8919849369")
+# Конфигурация подтягивается из переменных окружения (.env или настроек хостинга)
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
+TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "")
 TELEGRAM_BOT_USERNAME = os.getenv("TELEGRAM_BOT_USERNAME", "my_geopulse_bot")
 
 # Прямые контакты основателя для клиентов и партнеров

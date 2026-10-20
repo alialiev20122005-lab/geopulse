@@ -1,11 +1,20 @@
-# Если домена пока нет, работаем по IP адресу сервера:
 :80 {
+    encode zstd gzip
+    header {
+        X-Content-Type-Options nosniff
+        X-Frame-Options SAMEORIGIN
+        Referrer-Policy strict-origin-when-cross-origin
+    }
     reverse_proxy web:8000
 }
 
-# Когда купите домен (например, geopulse.ru), просто раскомментируйте блок ниже
-# и закомментируйте блок :80 выше. Caddy автоматически получит бесплатный SSL (HTTPS)!
-#
+# При подключении собственного домена:
 # geopulse.ru {
+#     encode zstd gzip
+#     header {
+#         X-Content-Type-Options nosniff
+#         X-Frame-Options SAMEORIGIN
+#         Referrer-Policy strict-origin-when-cross-origin
+#     }
 #     reverse_proxy web:8000
 # }

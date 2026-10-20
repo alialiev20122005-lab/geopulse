@@ -8,11 +8,32 @@ from datetime import datetime
 from typing import Optional
 from contextlib import asynccontextmanager
 
+import time
+from collections import defaultdict
+
 import qrcode
-from fastapi import FastAPI, HTTPException, Request, Form
+from fastapi import FastAPI, HTTPException, Request, Form, BackgroundTasks
 from fastapi.responses import HTMLResponse, Response, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
+
+# In-memory Rate Limiter для защиты от флуда и спама
+class InMemoryRateLimiter:
+    def __init__(self, requests_per_minute: int = 30):
+        self.rpm = requests_per_minute
+        self.history = defaultdict(list)
+
+    def check(self, client_ip: str) -> bool:
+        now = time.time()
+        window_start = now - 60
+        self.history[client_ip] = [t for t in self.history[client_ip] if t > window_start]
+        if len(self.history[client_ip]) >= self.rpm:
+            return False
+        self.history[client_ip].append(now)
+        return True
+
+feedback_rate_limiter = InMemoryRateLimiter(requests_per_minute=20)
+pilot_rate_limiter = InMemoryRateLimiter(requests_per_minute=10)
 
 from app.config import TELEGRAM_BOT_USERNAME, TELEGRAM_CHAT_ID, ADMIN_PASSWORD, SESSION_SECRET
 from app.database import (
@@ -308,7 +329,7 @@ async def print_tent_page(business_id: str, request: Request, table: Optional[st
     )
 
 @app.get("/api/qr/{business_id}")
-async def generate_qr(business_id: str, request: Request, table: Optional[str] = ""):
+def generate_qr(business_id: str, request: Request, table: Optional[str] = ""):
     """Динамическая генерация эстетичного PNG QR-кода со скругленными точками."""
     business = get_business(business_id)
     if not business:
@@ -357,8 +378,12 @@ async def generate_qr(business_id: str, request: Request, table: Optional[str] =
     )
 
 @app.post("/api/feedback")
-async def receive_feedback(payload: FeedbackPayload):
-    """Прием отзыва клиента: запись в базу SQLite и мгновенная рассылка в Telegram."""
+async def receive_feedback(payload: FeedbackPayload, request: Request, background_tasks: BackgroundTasks):
+    """Прием отзыва клиента: запись в базу SQLite и мгновенная рассылка в Telegram в фоне."""
+    client_ip = request.client.host if request.client else "unknown"
+    if not feedback_rate_limiter.check(client_ip):
+        raise HTTPException(status_code=429, detail="Слишком много обращений. Пожалуйста, подождите 1 минуту.")
+
     business = get_business(payload.business_id)
     if not business:
         raise HTTPException(status_code=404, detail="Заведение не найдено")
@@ -377,8 +402,9 @@ async def receive_feedback(payload: FeedbackPayload):
         f"Оценка: {payload.rating}/5 | Комментарий: {payload.comment}"
     )
 
-    # 2. Мгновенная рассылка всем привязанным управляющим через Telegram
-    sent_count = await broadcast_feedback(
+    # 2. Мгновенная рассылка всем привязанным управляющим через BackgroundTasks
+    background_tasks.add_task(
+        broadcast_feedback,
         business_id=payload.business_id,
         rating=payload.rating,
         comment=payload.comment,
@@ -386,7 +412,7 @@ async def receive_feedback(payload: FeedbackPayload):
         table_number=payload.table_number or ""
     )
 
-    return {"status": "ok", "feedback_id": feedback_id, "sent_to_telegram_count": sent_count}
+    return {"status": "ok", "feedback_id": feedback_id, "sent_to_telegram_count": 1}
 
 @app.get("/pitch", response_class=HTMLResponse)
 @app.get("/offer", response_class=HTMLResponse)
@@ -399,8 +425,12 @@ async def pitch_presentation_page(request: Request):
     )
 
 @app.post("/api/pilot-request")
-async def handle_pilot_request(payload: PilotRequestPayload):
+async def handle_pilot_request(payload: PilotRequestPayload, request: Request, background_tasks: BackgroundTasks):
     """Прием заявки на 14-дневный бесплатный тест-драйв с мгновенным оповещением в Telegram."""
+    client_ip = request.client.host if request.client else "unknown"
+    if not pilot_rate_limiter.check(client_ip):
+        raise HTTPException(status_code=429, detail="Слишком много заявок. Пожалуйста, подождите 1 минуту.")
+
     import re
     import urllib.parse
 
@@ -461,9 +491,9 @@ async def handle_pilot_request(payload: PilotRequestPayload):
 
     reply_markup = {"inline_keyboard": buttons} if buttons else None
 
-    # Отправляем оповещение основателю в Telegram
+    # Отправляем оповещение основателю в Telegram в фоне
     if TELEGRAM_CHAT_ID:
-        await send_message(TELEGRAM_CHAT_ID, text, reply_markup=reply_markup)
+        background_tasks.add_task(send_message, TELEGRAM_CHAT_ID, text, reply_markup)
 
     return {
         "status": "ok",

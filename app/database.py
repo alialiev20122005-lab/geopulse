@@ -14,7 +14,9 @@ def get_connection():
     conn = sqlite3.connect(DB_PATH, timeout=30.0)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA journal_mode = WAL;")
+    conn.execute("PRAGMA synchronous = NORMAL;")
     conn.execute("PRAGMA foreign_keys = ON;")
+    conn.execute("PRAGMA busy_timeout = 5000;")
     return conn
 
 def init_db():
@@ -86,6 +88,11 @@ def init_db():
             cursor.execute("ALTER TABLE businesses ADD COLUMN status TEXT DEFAULT 'pilot';")
         except sqlite3.OperationalError:
             pass
+
+        # Оптимизация: составные индексы для аналитики и выборок
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_feedbacks_business ON feedbacks(business_id, created_at DESC);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_owners_biz ON business_owners(business_id);")
+        cursor.execute("CREATE INDEX IF NOT EXISTS idx_leads_created ON leads(created_at DESC);")
 
         conn.commit()
 
