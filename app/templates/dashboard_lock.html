@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Доступ ограничен — {{ business.name }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Plus Jakarta Sans', 'Inter', sans-serif; }
+        .gradient-brand { background: linear-gradient(135deg, #4f46e5 0%, #a855f7 50%, #ec4899 100%); }
+    </style>
+</head>
+<body class="bg-[#0b0f19] text-slate-100 min-h-screen flex items-center justify-center p-4 selection:bg-indigo-500 selection:text-white">
+    <div class="max-w-md w-full">
+        
+        <div class="text-center mb-6">
+            <a href="/" class="inline-flex items-center gap-2 text-slate-400 hover:text-white text-xs font-semibold mb-4 transition">
+                ← На главную
+            </a>
+            <div class="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-slate-900 border border-slate-800 text-indigo-400 shadow-xl shadow-indigo-500/10 mb-3">
+                <svg class="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path></svg>
+            </div>
+            <h1 class="text-2xl font-black text-white">Дашборд защищен</h1>
+            <p class="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                Отзывы и контактные данные клиентов <b class="text-white">«{{ business.name }}»</b> доступны только руководству и администратору сервиса.
+            </p>
+        </div>
+
+        <div class="bg-slate-900/80 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl backdrop-blur-md space-y-6">
+            
+            {% if error %}
+            <div class="p-3.5 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs font-bold text-center">
+                {{ error }}
+            </div>
+            {% endif %}
+
+            <!-- Способ 1: Вход по коду доступа или паролю -->
+            <form action="/dashboard/{{ business.id }}/unlock" method="POST" class="space-y-3">
+                <label class="block text-xs font-bold text-slate-300">Код доступа или пароль администратора:</label>
+                <div class="flex gap-2">
+                    <input type="password" name="access_code" required placeholder="Введите пароль / код" class="flex-1 bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition">
+                    <button type="submit" class="gradient-brand hover:opacity-95 text-white font-bold text-xs px-5 py-3 rounded-xl shadow-lg transition active:scale-95 shrink-0">
+                        Войти ➔
+                    </button>
+                </div>
+            </form>
+
+            <div class="relative flex items-center justify-center">
+                <div class="border-t border-slate-800 w-full"></div>
+                <span class="bg-slate-900 px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500 absolute">ИЛИ</span>
+            </div>
+
+            <!-- Способ 2: Вход через Telegram-бота управляющего -->
+            <div class="space-y-3">
+                <p class="text-xs text-slate-400 text-center">Если вы директор или управляющий этого заведения:</p>
+                <a href="https://t.me/{{ bot_username }}?start=biz_{{ business.id }}" target="_blank" class="w-full inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs py-3.5 px-4 rounded-xl shadow-lg shadow-indigo-600/25 transition active:scale-[0.98]">
+                    <span>✈️ Открыть через Telegram-бота</span>
+                </a>
+            </div>
+
+            <div class="pt-2 border-t border-slate-800 text-center">
+                <a href="/admin/login" class="text-xs text-slate-500 hover:text-slate-300 font-semibold transition">
+                    🔐 Вход в общую панель администратора
+                </a>
+            </div>
+
+        </div>
+
+    </div>
+</body>
+</html>

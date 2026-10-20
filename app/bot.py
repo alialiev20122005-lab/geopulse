@@ -1,11 +1,12 @@
 import asyncio
+import hashlib
 import html
 import logging
 from datetime import datetime
 from typing import List, Optional
 import httpx
 
-from app.config import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID
+from app.config import TELEGRAM_BOT_TOKEN, TELEGRAM_CHAT_ID, SESSION_SECRET
 from app.database import (
     link_telegram_owner,
     get_business,
@@ -15,6 +16,11 @@ from app.database import (
 )
 
 logger = logging.getLogger("GeoPulseBot")
+
+def get_manager_token(business_id: str) -> str:
+    """Генерация контрольного токена доступа для директора заведения."""
+    raw = f"manager:{business_id}:{SESSION_SECRET}".encode("utf-8")
+    return hashlib.sha256(raw).hexdigest()[:16]
 
 async def send_message(chat_id: str, text: str, reply_markup: Optional[dict] = None) -> bool:
     """Отправка сообщения в Telegram по chat_id с разметкой HTML."""
@@ -179,7 +185,13 @@ async def telegram_polling_loop():
                                     f"Команды:\n"
                                     f"📊 /stats — статистика вашего заведения"
                                 )
-                                await send_message(chat_id, welcome_msg)
+                                mgr_token = get_manager_token(business_id)
+                                welcome_markup = {
+                                    "inline_keyboard": [[
+                                        {"text": "📊 Открыть личный дашборд", "url": f"https://geopulse-yo8k.onrender.com/dashboard/{business_id}?auth={mgr_token}"}
+                                    ]]
+                                }
+                                await send_message(chat_id, welcome_msg, reply_markup=welcome_markup)
                             else:
                                 await send_message(chat_id, "❌ Заведение с таким идентификатором не найдено.")
 
@@ -219,7 +231,13 @@ async def telegram_polling_loop():
                                         f"🚨 Перехвачено жалоб: <b>{neg}</b>\n"
                                         f"💚 Отправлено на Карты: <b>{pos}</b>"
                                     )
-                                    await send_message(chat_id, stat_msg)
+                                    mgr_token = get_manager_token(b["id"])
+                                    stat_markup = {
+                                        "inline_keyboard": [[
+                                            {"text": "📊 Открыть полный дашборд", "url": f"https://geopulse-yo8k.onrender.com/dashboard/{b['id']}?auth={mgr_token}"}
+                                        ]]
+                                    }
+                                    await send_message(chat_id, stat_msg, reply_markup=stat_markup)
                 else:
                     logger.warning(f"Telegram polling status {resp.status_code}. Sleeping 5s before retry.")
                     await asyncio.sleep(5)

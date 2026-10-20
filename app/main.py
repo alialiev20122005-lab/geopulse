@@ -2,6 +2,8 @@ import io
 import json
 import logging
 import asyncio
+import hashlib
+import secrets
 from datetime import datetime
 from typing import Optional
 from contextlib import asynccontextmanager
@@ -12,7 +14,7 @@ from fastapi.responses import HTMLResponse, Response, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
-from app.config import TELEGRAM_BOT_USERNAME, TELEGRAM_CHAT_ID
+from app.config import TELEGRAM_BOT_USERNAME, TELEGRAM_CHAT_ID, ADMIN_PASSWORD, SESSION_SECRET
 from app.database import (
     init_db,
     seed_initial_data,
@@ -150,18 +152,54 @@ async def success_page(business_id: str, request: Request):
         }
     )
 
+def get_manager_token(business_id: str) -> str:
+    """Генерация криптографического токена доступа для директора заведения."""
+    raw = f"manager:{business_id}:{SESSION_SECRET}".encode("utf-8")
+    return hashlib.sha256(raw).hexdigest()[:16]
+
+def is_manager_authorized(business_id: str, request: Request, auth_token: Optional[str] = None) -> bool:
+    """Проверка прав доступа к дашборду заведения (Администратор платформы или директор точки)."""
+    # 1. Администратор платформы имеет полный доступ ко всем дашбордам
+    if is_admin(request):
+        return True
+
+    expected = get_manager_token(business_id)
+
+    # 2. Проверка токена из параметров URL (magic-link из Telegram)
+    if auth_token and secrets.compare_digest(auth_token.strip(), expected):
+        return True
+
+    # 3. Проверка сохраненной сессионной куки директора
+    cookie_token = request.cookies.get(f"geopulse_mgr_{business_id}")
+    if cookie_token and secrets.compare_digest(cookie_token, expected):
+        return True
+
+    return False
+
 @app.get("/dashboard/{business_id}", response_class=HTMLResponse)
-async def dashboard_page(business_id: str, request: Request):
-    """Дашборд аналитики заведения."""
+async def dashboard_page(business_id: str, request: Request, auth: Optional[str] = None):
+    """Дашборд аналитики заведения с защитой конфиденциальности."""
     business = get_business(business_id)
     if not business:
         raise HTTPException(status_code=404, detail="Заведение не найдено")
+
+    # Проверяем авторизацию
+    if not is_manager_authorized(business_id, request, auth):
+        return templates.TemplateResponse(
+            request=request,
+            name="dashboard_lock.html",
+            context={
+                "business": business,
+                "bot_username": TELEGRAM_BOT_USERNAME,
+                "error": None
+            }
+        )
 
     stats_info = get_business_stats(business_id)
     owners = get_business_chat_ids(business_id)
     telegram_deep_link = f"https://t.me/{TELEGRAM_BOT_USERNAME}?start=biz_{business_id}"
 
-    return templates.TemplateResponse(
+    response = templates.TemplateResponse(
         request=request,
         name="dashboard.html",
         context={
@@ -172,6 +210,49 @@ async def dashboard_page(business_id: str, request: Request):
             "telegram_deep_link": telegram_deep_link
         }
     )
+
+    # Если вход по magic-link из Telegram — сохраняем сессию на 30 дней
+    if auth and secrets.compare_digest(auth.strip(), get_manager_token(business_id)):
+        response.set_cookie(
+            key=f"geopulse_mgr_{business_id}",
+            value=get_manager_token(business_id),
+            max_age=30 * 86400,
+            httponly=True,
+            samesite="lax"
+        )
+
+    return response
+
+@app.post("/dashboard/{business_id}/unlock")
+async def unlock_dashboard(business_id: str, request: Request, access_code: str = Form(...)):
+    """Разблокировка дашборда по коду доступа или паролю администратора."""
+    business = get_business(business_id)
+    if not business:
+        raise HTTPException(status_code=404, detail="Заведение не найдено")
+
+    mgr_token = get_manager_token(business_id)
+    valid_code = secrets.compare_digest(access_code.strip(), mgr_token) or secrets.compare_digest(access_code.strip(), ADMIN_PASSWORD)
+
+    if valid_code:
+        response = RedirectResponse(url=f"/dashboard/{business_id}", status_code=303)
+        response.set_cookie(
+            key=f"geopulse_mgr_{business_id}",
+            value=mgr_token,
+            max_age=30 * 86400,
+            httponly=True,
+            samesite="lax"
+        )
+        return response
+    else:
+        return templates.TemplateResponse(
+            request=request,
+            name="dashboard_lock.html",
+            context={
+                "business": business,
+                "bot_username": TELEGRAM_BOT_USERNAME,
+                "error": "Неверный код доступа или пароль администратора."
+            }
+        )
 
 @app.get("/r/{business_id}", response_class=HTMLResponse)
 async def review_page(business_id: str, request: Request, table: Optional[str] = ""):

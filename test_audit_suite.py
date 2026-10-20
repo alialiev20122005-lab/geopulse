@@ -183,6 +183,42 @@ async def run_tests():
         assert "Столик №6" in resp.text
         print("  -> Bulk print layout rendered with 2-up .print-sheet containers!")
 
+        # 10. Dashboard Privacy Protection
+        print("\n[TEST 10] Verifying Dashboard privacy and lock screen...")
+        client.cookies.clear()
+        
+        # Unauthenticated guest visits /dashboard/zerno -> gets lock screen
+        resp = await client.get("/dashboard/zerno")
+        assert resp.status_code == 200
+        assert "Дашборд защищен" in resp.text
+        assert "Журнал обращений клиентов" not in resp.text
+        print("  -> Unauthenticated /dashboard/zerno shows Lock Screen (no data leaked)!")
+
+        # Unlock with wrong code
+        resp = await client.post("/dashboard/zerno/unlock", data={"access_code": "wrong_pin"})
+        assert resp.status_code == 200
+        assert "Неверный код доступа" in resp.text
+        print("  -> Invalid access code properly rejected!")
+
+        # Unlock with valid admin password
+        resp = await client.post("/dashboard/zerno/unlock", data={"access_code": ADMIN_PASSWORD}, follow_redirects=False)
+        assert resp.status_code == 303
+        mgr_cookie = resp.cookies.get("geopulse_mgr_zerno")
+        assert mgr_cookie is not None
+        print("  -> Dashboard successfully unlocked via code, session cookie established!")
+
+        # Visiting with manager cookie
+        resp = await client.get("/dashboard/zerno", cookies={"geopulse_mgr_zerno": mgr_cookie})
+        assert resp.status_code == 200
+        assert "Журнал обращений клиентов" in resp.text
+        print("  -> Authenticated Manager dashboard displays full analytics!")
+
+        # Direct access with admin session
+        resp = await client.get("/dashboard/zerno", cookies={"geopulse_admin_session": admin_cookie})
+        assert resp.status_code == 200
+        assert "Журнал обращений клиентов" in resp.text
+        print("  -> Platform Admin has seamless direct access to venue dashboards!")
+
     print("\n=== ALL AUDIT & REGRESSION TESTS PASSED (100% SUCCESS) ===")
 
 if __name__ == "__main__":
