@@ -64,6 +64,21 @@ def init_db():
         );
         """)
 
+        # 4. Таблица заявок на 14-дневный пилот (Лиды)
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS leads (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            business_name TEXT NOT NULL,
+            phone TEXT NOT NULL,
+            city TEXT DEFAULT '',
+            tables_count TEXT DEFAULT '',
+            source TEXT DEFAULT 'web',
+            status TEXT DEFAULT 'new',
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+        """)
+
         conn.commit()
 
 def seed_initial_data(default_chat_id: str = ""):
@@ -205,3 +220,22 @@ def get_business_stats(business_id: str) -> Dict[str, Any]:
             "stats": stats,
             "feedbacks": recent_feedbacks
         }
+
+def create_lead(name: str, business_name: str, phone: str, city: str = "", tables_count: str = "", source: str = "web") -> int:
+    """Сохранение новой заявки на 14-дневный бесплатный пилот."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+        INSERT INTO leads (name, business_name, phone, city, tables_count, source)
+        VALUES (?, ?, ?, ?, ?, ?);
+        """, (name.strip(), business_name.strip(), phone.strip(), city.strip(), str(tables_count).strip(), source.strip()))
+        conn.commit()
+        return cursor.lastrowid
+
+def get_recent_leads(limit: int = 20) -> List[Dict[str, Any]]:
+    """Получение последних заявок на пилот."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM leads ORDER BY created_at DESC LIMIT ?;", (limit,))
+        return [dict(r) for r in cursor.fetchall()]
+

@@ -100,12 +100,6 @@ async def broadcast_feedback(business_id: str, rating: int, comment: str, contac
                     "url": f"https://wa.me/{digits}?text={wa_encoded_text}"
                 }
             ])
-            buttons.append([
-                {
-                    "text": "📞 Позвонить клиенту",
-                    "url": f"tel:+{digits}"
-                }
-            ])
         elif contact.startswith("@"):
             tg_username = contact.lstrip("@")
             buttons.append([
