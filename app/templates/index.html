@@ -370,97 +370,90 @@
     </section>
 
     <!-- Секция: Тарифы -->
-    <section id="pricing" class="relative z-10 py-20 px-4 sm:px-6 lg:px-8 max-w-5xl mx-auto">
-        <div class="text-center max-w-xl mx-auto mb-16">
-            <span class="text-xs font-black uppercase tracking-widest text-indigo-400">Прозрачные цены</span>
-            <h2 class="text-3xl sm:text-4xl font-black text-white mt-1">Тарифы для заведений любого масштаба</h2>
-            <p class="text-sm text-slate-400 mt-2">14 дней бесплатного тестирования на всех тарифах без привязки банковской карты.</p>
+    <section id="pricing" class="relative z-10 py-20 px-4 sm:px-6 lg:px-8 max-w-4xl mx-auto">
+        <div class="text-center max-w-xl mx-auto mb-12">
+            <span class="text-xs font-black uppercase tracking-widest text-indigo-400">Простые и понятные условия</span>
+            <h2 class="text-3xl sm:text-4xl font-black text-white mt-1">Один честный тариф — Всё включено</h2>
+            <p class="text-sm text-slate-400 mt-2">14 дней бесплатного тест-драйва без привязки банковской карты. Никаких скрытых условий.</p>
         </div>
 
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-stretch">
-            
-            <!-- Тариф 1: Старт -->
-            <div class="bg-slate-900/60 border border-slate-800 p-8 rounded-3xl flex flex-col justify-between">
-                <div>
-                    <h3 class="text-lg font-black text-white">Старт</h3>
-                    <p class="text-xs text-slate-400 mt-1">Для кофеен, барбершопов и небольших точек</p>
-                    <div class="my-6">
-                        <span class="text-4xl font-black text-white">1 990 ₽</span>
-                        <span class="text-xs text-slate-400">/ месяц</span>
-                    </div>
-                    <ul class="space-y-3 text-xs text-slate-300 font-medium">
-                        <li class="flex items-center gap-2"><span class="text-emerald-400">✔</span> 1 заведение (до 10 столов)</li>
-                        <li class="flex items-center gap-2"><span class="text-emerald-400">✔</span> Цветные QR-карточки</li>
-                        <li class="flex items-center gap-2"><span class="text-emerald-400">✔</span> Перехват негатива в Telegram</li>
-                        <li class="flex items-center gap-2"><span class="text-emerald-400">✔</span> Ответы от ИИ (WhatsApp + Карты)</li>
-                    </ul>
-                </div>
-                <div class="mt-8 space-y-2">
-                    <button type="button" onclick="openPayModal('start', 'Тариф «Старт»', 1990)" class="w-full text-center bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs py-3 rounded-xl transition shadow-lg shadow-indigo-600/20 active:scale-95">
-                        Оплатить онлайн (1 990 ₽) 💳
-                    </button>
-                    <a href="#connect" onclick="selectPlan('Тариф «Старт» (1 990 ₽/мес)')" class="block w-full text-center text-slate-400 hover:text-white text-[11px] underline">
-                        или протестировать 14 дней (0 ₽)
-                    </a>
-                </div>
-            </div>
-
-            <!-- Тариф 2: Бизнес (Популярный) -->
-            <div class="bg-gradient-to-b from-indigo-950/60 via-slate-900 to-slate-900 border-2 border-indigo-500 p-8 rounded-3xl flex flex-col justify-between relative shadow-2xl shadow-indigo-500/20">
-                <span class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-indigo-500 text-white text-[10px] font-black uppercase tracking-wider px-3 py-1 rounded-full shadow">
-                    Хит продаж
+        <div class="max-w-2xl mx-auto">
+            <!-- Единый тариф: Старт (Всё включено) -->
+            <div class="bg-gradient-to-b from-indigo-950/70 via-slate-900 to-slate-900 border-2 border-indigo-500/80 p-6 sm:p-10 rounded-[32px] flex flex-col justify-between relative shadow-2xl shadow-indigo-500/20">
+                <span class="absolute -top-3.5 left-1/2 -translate-x-1/2 bg-gradient-to-r from-pink-500 to-indigo-500 text-white text-[11px] font-black uppercase tracking-wider px-4 py-1 rounded-full shadow-lg shadow-pink-500/30 whitespace-nowrap">
+                    🔥 14 дней бесплатно • Затем 1 990 ₽/мес
                 </span>
+
                 <div>
-                    <h3 class="text-lg font-black text-white">Бизнес</h3>
-                    <p class="text-xs text-slate-400 mt-1">Для ресторанов, клиник и автосервисов</p>
-                    <div class="my-6">
-                        <span class="text-4xl font-black text-white">3 900 ₽</span>
-                        <span class="text-xs text-slate-400">/ месяц</span>
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800/80 pb-6 mb-6">
+                        <div>
+                            <h3 class="text-2xl font-black text-white">Тариф «Старт»</h3>
+                            <p class="text-xs text-slate-400 mt-1">Полный пакет защиты репутации и сбора 5★ для вашего заведения</p>
+                        </div>
+                        <div class="sm:text-right">
+                            <span class="text-4xl sm:text-5xl font-black text-white">1 990 ₽</span>
+                            <span class="text-xs text-slate-400 block sm:inline">/ месяц</span>
+                        </div>
                     </div>
-                    <ul class="space-y-3 text-xs text-slate-200 font-medium">
-                        <li class="flex items-center gap-2"><span class="text-emerald-400">✔</span> До 40 столиков / рабочих мест</li>
-                        <li class="flex items-center gap-2"><span class="text-emerald-400">✔</span> Массовая печать А4 для типографии</li>
-                        <li class="flex items-center gap-2"><span class="text-emerald-400">✔</span> До 5 управляющих в Telegram</li>
-                        <li class="flex items-center gap-2"><span class="text-emerald-400">✔</span> Кнопки звонка и WhatsApp клиенту</li>
-                        <li class="flex items-center gap-2"><span class="text-emerald-400">✔</span> Поддержка 2ГИС и Яндекс.Карт</li>
-                    </ul>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5 text-xs text-slate-200 font-medium my-6">
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0">✔</span>
+                            <span>1 заведение (до 25 столов / мастеров)</span>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0">✔</span>
+                            <span>Цветные QR-карточки (печать А4)</span>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0">✔</span>
+                            <span>Перехват негатива (1–3★) в Telegram</span>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0">✔</span>
+                            <span>Умные ответы ИИ (WhatsApp + Карты)</span>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0">✔</span>
+                            <span>Личный дашборд статистики и NPS</span>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0">✔</span>
+                            <span>Сбор реальных 5★ на Яндекс и 2ГИС</span>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0">✔</span>
+                            <span>Подключение до 3 управляющих в Telegram</span>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <span class="w-5 h-5 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold text-xs shrink-0">✔</span>
+                            <span>Прямая поддержка от основателя</span>
+                        </div>
+                    </div>
                 </div>
-                <div class="mt-8 space-y-2">
-                    <button type="button" onclick="openPayModal('business', 'Тариф «Бизнес»', 3900)" class="w-full text-center gradient-brand hover:opacity-95 text-white font-extrabold text-xs py-3.5 rounded-xl shadow-lg shadow-pink-500/25 transition active:scale-95">
-                        Оплатить подписку (3 900 ₽) ➔
-                    </button>
-                    <a href="#connect" onclick="selectPlan('Тариф «Бизнес» (3 900 ₽/мес)')" class="block w-full text-center text-slate-300 hover:text-white text-[11px] underline">
-                        или протестировать 14 дней (0 ₽)
+
+                <div class="mt-4 pt-6 border-t border-slate-800/80 flex flex-col sm:flex-row items-center gap-3">
+                    <a href="#connect" onclick="selectPlan('Тариф «Старт» (1 990 ₽/мес)')" class="w-full sm:flex-1 text-center gradient-brand hover:opacity-95 text-white font-extrabold text-sm py-4 px-6 rounded-2xl shadow-xl shadow-pink-500/25 transition active:scale-95 flex items-center justify-center gap-2">
+                        <span>🚀 Начать 14 дней бесплатно</span>
+                        <span>➔</span>
                     </a>
+                    <button type="button" onclick="openPayModal('start', 'Тариф «Старт»', 1990)" class="w-full sm:w-auto text-center bg-slate-800/90 hover:bg-slate-700 text-slate-200 hover:text-white font-bold text-xs py-4 px-5 rounded-2xl border border-slate-700 transition active:scale-95 whitespace-nowrap">
+                        Оплатить подписку (1 990 ₽) 💳
+                    </button>
                 </div>
             </div>
 
-            <!-- Тариф 3: Сеть -->
-            <div class="bg-slate-900/60 border border-slate-800 p-8 rounded-3xl flex flex-col justify-between">
-                <div>
-                    <h3 class="text-lg font-black text-white">Сеть</h3>
-                    <p class="text-xs text-slate-400 mt-1">Для франшиз и сетей от 3 локаций</p>
-                    <div class="my-6">
-                        <span class="text-4xl font-black text-white">от 7 900 ₽</span>
-                        <span class="text-xs text-slate-400">/ месяц</span>
-                    </div>
-                    <ul class="space-y-3 text-xs text-slate-300 font-medium">
-                        <li class="flex items-center gap-2"><span class="text-emerald-400">✔</span> Неограниченно точек и столов</li>
-                        <li class="flex items-center gap-2"><span class="text-emerald-400">✔</span> Единый сводный дашборд сети</li>
-                        <li class="flex items-center gap-2"><span class="text-emerald-400">✔</span> Персональный менеджер и SLA</li>
-                        <li class="flex items-center gap-2"><span class="text-emerald-400">✔</span> Оплата по безналичному расчету</li>
-                    </ul>
+            <!-- Подсказка для сетей -->
+            <div class="mt-6 text-center text-xs text-slate-400 bg-slate-900/50 border border-slate-800/80 p-4 rounded-2xl flex flex-col sm:flex-row items-center justify-between gap-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-base">🏢</span>
+                    <span><strong>У вас сеть от 3 заведений или франшиза?</strong></span>
                 </div>
-                <div class="mt-8 space-y-2">
-                    <button type="button" onclick="openPayModal('network', 'Тариф «Сеть»', 6900)" class="w-full text-center bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs py-3 rounded-xl border border-slate-700 transition active:scale-95">
-                        Оплатить онлайн (6 900 ₽) 💳
-                    </button>
-                    <a href="#connect" onclick="selectPlan('Тариф «Сеть» (6 900 ₽/мес)')" class="block w-full text-center text-slate-400 hover:text-white text-[11px] underline">
-                        или запросить индивидуальный договор
-                    </a>
-                </div>
+                <a href="https://t.me/mbappeeed" target="_blank" class="text-indigo-400 hover:text-indigo-300 font-bold underline inline-flex items-center gap-1">
+                    <span>Обсудить спец-условия в Telegram</span>
+                    <span>➔</span>
+                </a>
             </div>
-
         </div>
     </section>
 

@@ -408,72 +408,50 @@
         </section>
 
         <!-- СЛАЙД 7: ТАРИФЫ -->
-        <section class="page-break print-card bg-slate-900/70 border border-slate-800/90 rounded-3xl p-6 sm:p-10 mb-10 shadow-2xl backdrop-blur-md">
-            <div class="flex items-center gap-2 mb-3 text-pink-400 font-bold text-xs uppercase tracking-wider">
-                <span>💰 Прозрачная стоимость</span>
-            </div>
-            <h2 class="text-2xl sm:text-3xl font-black text-white mb-2 print-text-dark">
-                Тарифы после окончания бесплатного пилота
+        <section class="min-h-screen flex flex-col justify-center items-center px-4 sm:px-6 py-20 snap-start max-w-4xl mx-auto w-full print-page">
+            <span class="text-xs font-black uppercase tracking-widest text-indigo-400 mb-2">Прозрачные инвестиции</span>
+            <h2 class="text-2xl sm:text-4xl font-black text-white text-center mb-3">
+                Единый тариф «Старт» — Всё включено
             </h2>
-            <p class="text-sm text-slate-400 mb-8 font-medium">Первые 14 дней — бесплатно для всех новых заведений.</p>
+            <p class="text-sm text-slate-400 mb-8 font-medium text-center">Первые 14 дней — бесплатно для всех новых заведений. Без привязки карты.</p>
 
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <!-- Тариф 1 -->
-                <div class="bg-slate-950/60 border border-slate-800/90 rounded-2xl p-6 flex flex-col justify-between print-card">
+            <div class="max-w-xl w-full">
+                <div class="relative bg-gradient-to-b from-indigo-950/60 via-slate-900 to-slate-950 border-2 border-indigo-500/70 rounded-3xl p-6 sm:p-8 flex flex-col justify-between shadow-2xl shadow-indigo-500/20 print-card">
+                    <div class="absolute -top-3.5 right-6 px-3.5 py-1 rounded-full gradient-brand text-white text-[10px] font-black uppercase tracking-wider shadow">
+                        14 ДНЕЙ ТЕСТ-ДРАЙВ 0 ₽
+                    </div>
                     <div>
-                        <h3 class="text-lg font-bold text-white">Старт</h3>
-                        <p class="text-xs text-slate-400 mt-1">Для кофеен, барбершопов и небольших точек</p>
-                        <div class="my-5">
-                            <span class="text-3xl font-black text-white">1 990 ₽</span>
-                            <span class="text-xs text-slate-400">/ месяц</span>
+                        <div class="flex items-center justify-between border-b border-slate-800 pb-4 mb-5">
+                            <div>
+                                <h3 class="text-xl font-black text-white">Тариф «Старт»</h3>
+                                <p class="text-xs text-slate-300 mt-0.5">Для кафе, ресторанов, салонов и автосервисов</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-3xl font-black text-white">1 990 ₽</span>
+                                <span class="text-xs text-slate-400 block">/ месяц</span>
+                            </div>
                         </div>
-                        <ul class="text-xs text-slate-300 space-y-2.5 font-medium">
-                            <li class="flex items-center gap-2"><span class="text-indigo-400">✓</span> До 10 столиков / мастеров</li>
-                            <li class="flex items-center gap-2"><span class="text-indigo-400">✓</span> Перехват негатива в Telegram</li>
-                            <li class="flex items-center gap-2"><span class="text-indigo-400">✓</span> Отзывы на Яндекс.Картах</li>
-                            <li class="flex items-center gap-2"><span class="text-indigo-400">✓</span> Базовая аналитика</li>
+
+                        <ul class="text-xs text-slate-200 space-y-3 font-medium my-4">
+                            <li class="flex items-center gap-2.5"><span class="text-emerald-400 font-bold">✓</span> 1 заведение (до 25 столиков / мастеров)</li>
+                            <li class="flex items-center gap-2.5"><span class="text-emerald-400 font-bold">✓</span> Готовые цветные QR-карточки для печати (А4 / тейбл-тенты)</li>
+                            <li class="flex items-center gap-2.5"><span class="text-emerald-400 font-bold">✓</span> Моментальный перехват недовольных гостей (1–3★) в Telegram</li>
+                            <li class="flex items-center gap-2.5"><span class="text-emerald-400 font-bold">✓</span> ИИ-генерация вежливых ответов и шаблонов для WhatsApp</li>
+                            <li class="flex items-center gap-2.5"><span class="text-emerald-400 font-bold">✓</span> Прямой перевод гостей с оценкой 5★ на Яндекс.Карты и 2ГИС</li>
+                            <li class="flex items-center gap-2.5"><span class="text-emerald-400 font-bold">✓</span> Личный дашборд аналитики, индекса NPS и динамики отзывов</li>
+                            <li class="flex items-center gap-2.5"><span class="text-emerald-400 font-bold">✓</span> До 3 управляющих в Telegram без доплат</li>
                         </ul>
+                    </div>
+
+                    <div class="mt-6 pt-4 border-t border-slate-800/80 flex items-center justify-between text-xs text-slate-400">
+                        <span>Окупаемость: <strong>1 спасенный гость</strong></span>
+                        <span class="text-emerald-400 font-bold">66 ₽ в день</span>
                     </div>
                 </div>
 
-                <!-- Тариф 2: Бизнес (Хит) -->
-                <div class="relative bg-gradient-to-b from-indigo-950/50 to-slate-950 border-2 border-indigo-500/50 rounded-2xl p-6 flex flex-col justify-between shadow-xl shadow-indigo-500/10 print-card">
-                    <div class="absolute -top-3 right-4 px-3 py-0.5 rounded-full gradient-brand text-white text-[10px] font-black uppercase tracking-wider shadow">
-                        ХИТ ПРОДАЖ
-                    </div>
-                    <div>
-                        <h3 class="text-lg font-bold text-white">Бизнес</h3>
-                        <p class="text-xs text-slate-300 mt-1">Для ресторанов, клиник и премиум-салонов</p>
-                        <div class="my-5">
-                            <span class="text-3xl font-black text-white">3 900 ₽</span>
-                            <span class="text-xs text-slate-400">/ месяц</span>
-                        </div>
-                        <ul class="text-xs text-slate-200 space-y-2.5 font-medium">
-                            <li class="flex items-center gap-2"><span class="text-emerald-400">✓</span> До 30 столиков с нумерацией</li>
-                            <li class="flex items-center gap-2"><span class="text-emerald-400">✓</span> ИИ-помощник с готовыми ответами</li>
-                            <li class="flex items-center gap-2"><span class="text-emerald-400">✓</span> Быстрый переход в WhatsApp клиенту</li>
-                            <li class="flex items-center gap-2"><span class="text-emerald-400">✓</span> Поддержка Яндекс Карт + 2ГИС</li>
-                            <li class="flex items-center gap-2"><span class="text-emerald-400">✓</span> Неограниченное число менеджеров</li>
-                        </ul>
-                    </div>
-                </div>
-
-                <!-- Тариф 3: Сеть -->
-                <div class="bg-slate-950/60 border border-slate-800/90 rounded-2xl p-6 flex flex-col justify-between print-card">
-                    <div>
-                        <h3 class="text-lg font-bold text-white">Сеть & Премиум</h3>
-                        <p class="text-xs text-slate-400 mt-1">Для ресторанных сетей и франшиз</p>
-                        <div class="my-5">
-                            <span class="text-3xl font-black text-white">7 900 ₽</span>
-                            <span class="text-xs text-slate-400">/ месяц</span>
-                        </div>
-                        <ul class="text-xs text-slate-300 space-y-2.5 font-medium">
-                            <li class="flex items-center gap-2"><span class="text-indigo-400">✓</span> Безлимит столиков и филиалов</li>
-                            <li class="flex items-center gap-2"><span class="text-indigo-400">✓</span> Индивидуальный дизайн карточек</li>
-                            <li class="flex items-center gap-2"><span class="text-indigo-400">✓</span> Персональный менеджер внедрения</li>
-                            <li class="flex items-center gap-2"><span class="text-indigo-400">✓</span> Выгрузка отчетов в Excel / API</li>
-                        </ul>
-                    </div>
+                <div class="mt-4 text-center text-xs text-slate-400 bg-slate-900/40 border border-slate-800 p-3 rounded-2xl flex items-center justify-between">
+                    <span>🏢 Для сетей от 3 заведений — персональный SLA и скидки</span>
+                    <a href="https://t.me/mbappeeed" target="_blank" class="text-indigo-400 hover:underline font-bold">Обсудить ➔</a>
                 </div>
             </div>
         </section>
