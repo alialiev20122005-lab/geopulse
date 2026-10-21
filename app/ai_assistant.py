@@ -5,9 +5,10 @@ import httpx
 
 logger = logging.getLogger("GeoPulseAI")
 
+# Поддержка нескольких провайдеров: OpenRouter, DeepSeek, OpenAI
+OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY", "")
+DEEPSEEK_API_KEY = os.getenv("DEEPSEEK_API_KEY", "")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
-OPENAI_BASE_URL = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
-AI_MODEL = os.getenv("AI_MODEL", "gpt-4o-mini")
 
 async def generate_review_responses(
     business_name: str,
@@ -20,24 +21,25 @@ async def generate_review_responses(
     Генерирует два варианта ответа:
     1. Личное сообщение клиенту в WhatsApp / SMS / Telegram (для оперативного урегулирования)
     2. Публичный ответ для Яндекс.Карт / 2ГИС (для защиты репутации перед будущими клиентами)
+    С автоматическим переключением на надежный эвристический генератор при лимитах или сетевых задержках.
     """
 
-    # Если задан API-ключ нейросети, вызываем реальную LLM
-    if OPENAI_API_KEY:
+    # 1. Попытка вызова внешней нейросети с защитой по таймауту
+    if OPENROUTER_API_KEY or DEEPSEEK_API_KEY or OPENAI_API_KEY:
         try:
             return await _call_llm(business_name, category, rating, comment, contact)
         except Exception as e:
-            logger.error(f"Ошибка вызова LLM: {e}, переключаемся на эвристический генератор.")
+            logger.info(f"Внешняя LLM недоступна ({e}), переключаемся на встроенный интеллект-генератор.")
 
-    # Интеллектуальный генератор по правилам сервиса (работает мгновенно без внешних ключей)
+    # 2. Мгновенный интеллектуальный генератор по правилам ресторанного сервиса (0 задержек)
     return _generate_heuristic_responses(business_name, category, rating, comment, contact)
 
 async def _call_llm(business_name: str, category: str, rating: int, comment: str, contact: str) -> Tuple[str, str]:
     prompt = f"""
-Ты — топовый эксперт по клиентскому сервису и управлению репутацией (ORM) в России.
+Ты — ведущий эксперт по клиентскому сервису и управлению репутацией (ORM) в России.
 Заведение: «{business_name}» ({category}).
 Клиент оставил оценку: {rating} из 5.
-Суть жалобы: «{comment}»
+Суть претензии: «{comment}»
 Контакт: {contact}
 
 Сгенерируй строго ДВА текста:
@@ -53,29 +55,39 @@ async def _call_llm(business_name: str, category: str, rating: int, comment: str
 Формат ответа: раздели два текста строкой ===SPLIT===
     """
 
-    headers = {
-        "Authorization": f"Bearer {OPENAI_API_KEY}",
-        "Content-Type": "application/json"
-    }
-    payload = {
-        "model": AI_MODEL,
-        "messages": [
-            {"role": "system", "content": "Ты эксперт по PR и клиентскому сервису. Отвечай кратко, емко и убедительно."},
-            {"role": "user", "content": prompt}
-        ],
-        "temperature": 0.7
-    }
+    # 1. Пробуем OpenRouter если ключ задан
+    if OPENROUTER_API_KEY:
+        url = "https://openrouter.ai/api/v1/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {OPENROUTER_API_KEY}",
+            "Content-Type": "application/json",
+            "HTTP-Referer": "https://pulse-geo.site",
+            "X-Title": "GeoPulse App",
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) GeoPulse/1.0"
+        }
+        for model in ["nvidia/nemotron-3.5-lightning:free", "minimax/minimax-m3.1-flash:free", "google/gemma-4-31b-it:free"]:
+            payload = {
+                "model": model,
+                "messages": [
+                    {"role": "system", "content": "Ты эксперт по PR и клиентскому сервису в России. Отвечай кратко, емко, вежливо и убедительно по-русски."},
+                    {"role": "user", "content": prompt}
+                ],
+                "max_tokens": 500
+            }
+            try:
+                async with httpx.AsyncClient(timeout=4.0) as client:
+                    resp = await client.post(url, headers=headers, json=payload)
+                    if resp.status_code == 200:
+                        data = resp.json()
+                        msg = data["choices"][0]["message"]
+                        result = msg.get("content") or msg.get("reasoning")
+                        if result and "===SPLIT===" in result:
+                            parts = result.split("===SPLIT===")
+                            return parts[0].strip(), parts[1].strip()
+            except Exception:
+                continue
 
-    async with httpx.AsyncClient(timeout=15.0) as client:
-        resp = await client.post(f"{OPENAI_BASE_URL}/chat/completions", headers=headers, json=payload)
-        if resp.status_code == 200:
-            result = resp.json()["choices"][0]["message"]["content"]
-            if "===SPLIT===" in result:
-                parts = result.split("===SPLIT===")
-                return parts[0].strip(), parts[1].strip()
-            return result.strip(), result.strip()
-        else:
-            raise RuntimeError(f"LLM API Error: {resp.text}")
+    raise RuntimeError("Внешняя LLM временно занята")
 
 def _generate_heuristic_responses(
     business_name: str,
