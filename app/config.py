@@ -54,9 +54,9 @@ PLANS: Dict[str, Dict[str, Any]] = {
     "start": {
         "id": "start",
         "name": "Тариф «Старт»",
-        "price": 1990,
+        "price": 990,
         "period": "месяц",
-        "tables": "до 10 столов / мастеров"
+        "tables": "до 25 столов / мастеров"
     },
     "business": {
         "id": "business",
