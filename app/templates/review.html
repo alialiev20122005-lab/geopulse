@@ -206,6 +206,21 @@
             } else {
                 document.getElementById('branch-positive').classList.remove('hidden');
                 document.getElementById('branch-negative').classList.add('hidden');
+
+                // Фиксация высокой оценки в аналитике и мгновенное оповещение руководства
+                fetch('/api/feedback', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        business_id: businessId,
+                        rating: rating,
+                        comment: 'Гость поставил высокую оценку и перенаправлен на карты',
+                        contact: '',
+                        table_number: '{{ table_number }}'
+                    })
+                }).catch(function(err) {
+                    console.error('Feedback recording error:', err);
+                });
             }
         }
 

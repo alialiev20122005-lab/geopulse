@@ -1,5 +1,29 @@
 import os
 from typing import Dict, Any
+
+# Автоматическое считывание .env без обязательной внешней библиотеки dotenv
+def _load_env_fallback():
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+    candidates = [
+        os.path.join(base_dir, ".env"),
+        os.path.join(os.getcwd(), ".env")
+    ]
+    for p in candidates:
+        if os.path.isfile(p):
+            try:
+                with open(p, "r", encoding="utf-8") as f:
+                    for line in f:
+                        line = line.strip()
+                        if line and not line.startswith("#") and "=" in line:
+                            k, v = line.split("=", 1)
+                            k, v = k.strip(), v.strip().strip('"').strip("'")
+                            if k not in os.environ:
+                                os.environ[k] = v
+            except Exception:
+                pass
+
+_load_env_fallback()
+
 try:
     from dotenv import load_dotenv
     load_dotenv()
@@ -8,7 +32,8 @@ except ImportError:
 
 # Настройки Telegram
 # Конфигурация подтягивается из переменных окружения (.env или настроек хостинга)
-TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "")
+# С надежным fallback для безотказной работы на Render и локально
+TELEGRAM_BOT_TOKEN = os.getenv("TELEGRAM_BOT_TOKEN", "8758602246:AAFglq5spoLAqxpo4FwmZ92qmnKjeVV7d2E")
 TELEGRAM_CHAT_ID = os.getenv("TELEGRAM_CHAT_ID", "8919849369")
 TELEGRAM_BOT_USERNAME = os.getenv("TELEGRAM_BOT_USERNAME", "my_geopulse_bot")
 
