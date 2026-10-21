@@ -42,8 +42,8 @@ FOUNDER_PHONE = os.getenv("FOUNDER_PHONE", "79038272579")
 FOUNDER_PHONE_DISPLAY = os.getenv("FOUNDER_PHONE_DISPLAY", "+7 (903) 827-25-79")
 FOUNDER_TELEGRAM = os.getenv("FOUNDER_TELEGRAM", "mbappeeed")
 
-# Базовый домен сервиса для формирования внешних ссылок
-BASE_URL = os.getenv("BASE_URL", "https://geopulse-yo8k.onrender.com").rstrip("/")
+# Базовый домен сервиса для формирования внешних ссылок (Amvera Cloud РФ)
+BASE_URL = os.getenv("BASE_URL", "https://g-wolfdag.msk1.amvera.tech").rstrip("/")
 
 # Настройки интернет-эквайринга (ЮKassa)
 YOOKASSA_SHOP_ID = os.getenv("YOOKASSA_SHOP_ID", "")
