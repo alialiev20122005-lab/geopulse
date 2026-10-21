@@ -7,6 +7,14 @@ import os
 # Если папка существует, база сохраняется навсегда между перезапусками контейнера.
 if os.path.exists("/data") and os.path.isdir("/data"):
     DB_PATH = "/data/geopulse.db"
+    # Если в постоянном хранилище еще нет базы, копируем стартовую базу с демо-заведениями
+    repo_db = os.path.join(os.path.dirname(os.path.dirname(__file__)), "geopulse.db")
+    if not os.path.exists(DB_PATH) and os.path.exists(repo_db):
+        try:
+            import shutil
+            shutil.copy2(repo_db, DB_PATH)
+        except Exception:
+            pass
 else:
     DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "geopulse.db")
 

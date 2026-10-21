@@ -9,3 +9,5 @@ build:
 
 run:
   command: python -m uvicorn app.main:app --host 0.0.0.0 --port 80
+  persistence:
+    mountPath: /data
