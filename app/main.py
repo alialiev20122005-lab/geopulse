@@ -362,7 +362,7 @@ async def review_page(business_id: str, request: Request, table: Optional[str] =
 async def print_bulk_tents_page(
     business_id: str, 
     request: Request, 
-    tables: int = 10,
+    tables: int = 1,
     theme: str = "specialty",
     hook: str = "",
     gift: str = "",
@@ -394,7 +394,7 @@ async def print_tent_page(
     business_id: str, 
     request: Request, 
     table: Optional[str] = "",
-    tables: int = 10,
+    tables: int = 1,
     theme: str = "specialty",
     hook: str = "",
     gift: str = "",
