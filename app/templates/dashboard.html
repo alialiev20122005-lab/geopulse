@@ -21,12 +21,13 @@
                 <p class="text-xs text-slate-500 mt-0.5">{{ business.category }} • {{ business.address }}</p>
             </div>
             <div class="flex flex-wrap items-center gap-2">
-                <a href="/print/{{ business.id }}/all?tables=10" target="_blank" class="bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 text-xs font-bold px-3.5 py-2.5 rounded-xl transition shadow-sm flex items-center gap-1.5">
-                    <span>📋</span>
-                    <span>Печать 10 столов (А4)</span>
+                <a href="/print/{{ business.id }}?tables=10" target="_blank" class="bg-indigo-50 border border-indigo-200 text-indigo-700 hover:bg-indigo-100 text-xs font-bold px-3.5 py-2.5 rounded-xl transition shadow-sm flex items-center gap-1.5">
+                    <span>🎨</span>
+                    <span>Студия тейбл-тентов (12 стилей)</span>
                 </a>
-                <a href="/print/{{ business.id }}" target="_blank" class="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-semibold px-3.5 py-2.5 rounded-xl transition shadow-sm">
-                    1 карточка 🖨️
+                <a href="/print/{{ business.id }}/all?tables=10" target="_blank" class="bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 text-xs font-semibold px-3.5 py-2.5 rounded-xl transition shadow-sm flex items-center gap-1.5">
+                    <span>🖨️</span>
+                    <span>Печать всех столов (А4)</span>
                 </a>
                 <a href="/r/{{ business.id }}" target="_blank" class="bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition shadow-sm">
                     Экран гостя ↗

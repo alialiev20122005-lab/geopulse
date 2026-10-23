@@ -348,8 +348,15 @@ async def review_page(business_id: str, request: Request, table: Optional[str] =
     )
 
 @app.get("/print/{business_id}/all", response_class=HTMLResponse)
-async def print_bulk_tents_page(business_id: str, request: Request, tables: int = 10):
-    """Массовая печать карточек столиков (раскладка А4 для типографии)."""
+async def print_bulk_tents_page(
+    business_id: str, 
+    request: Request, 
+    tables: int = 10,
+    theme: str = "specialty",
+    hook: str = "",
+    gift: str = ""
+):
+    """Интерактивная дизайн-студия и массовая печать тейбл-тентов (раскладка А4)."""
     business = get_business(business_id)
     if not business:
         raise HTTPException(status_code=404, detail="Заведение не найдено")
@@ -362,24 +369,41 @@ async def print_bulk_tents_page(business_id: str, request: Request, tables: int 
             "business": business,
             "business_id": business_id,
             "tables_count": count,
-            "tables_range": list(range(1, count + 1))
+            "tables_range": list(range(1, count + 1)),
+            "theme": theme,
+            "hook": hook,
+            "gift": gift
         }
     )
 
 @app.get("/print/{business_id}", response_class=HTMLResponse)
-async def print_tent_page(business_id: str, request: Request, table: Optional[str] = ""):
-    """Страница тейбл-тента для печати на принтере."""
+async def print_tent_page(
+    business_id: str, 
+    request: Request, 
+    table: Optional[str] = "",
+    tables: int = 10,
+    theme: str = "specialty",
+    hook: str = "",
+    gift: str = ""
+):
+    """Интерактивная дизайн-студия тейбл-тентов с выбором из 12 стилей."""
     business = get_business(business_id)
     if not business:
         raise HTTPException(status_code=404, detail="Заведение не найдено")
 
+    count = max(1, min(100, tables))
     return templates.TemplateResponse(
         request=request,
-        name="table_tent.html",
+        name="table_tent_bulk.html",
         context={
             "business": business,
             "business_id": business_id,
-            "table_number": table
+            "tables_count": count,
+            "tables_range": list(range(1, count + 1)),
+            "table_number": table or "1",
+            "theme": theme,
+            "hook": hook,
+            "gift": gift
         }
     )
 

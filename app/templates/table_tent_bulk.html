@@ -3,21 +3,284 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Печать столиков (1–{{ tables_count }}) — {{ business.name }}</title>
+    <title>Дизайн-студия тейбл-тентов — {{ business.name }}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800;900&family=Comfortaa:wght@600;700&family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,600&family=Plus+Jakarta+Sans:wght@500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
     <style>
+        /* Базовая типографика */
         body { 
-            font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+            font-family: 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif; 
         }
-        .gradient-border {
-            background: linear-gradient(135deg, #6366f1 0%, #ec4899 50%, #f59e0b 100%);
+
+        /* --- 12 ДИЗАЙН-ТЕМ ДЛЯ ТЕЙБЛ-ТЕНТОВ --- */
+
+        /* 1. Specialty (Скандинавский минимализм) */
+        .theme-specialty .tent-card {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            color: #0f172a;
+            font-family: 'Inter', sans-serif;
         }
-        .gradient-header {
-            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 50%, #db2777 100%);
+        .theme-specialty .tent-header {
+            background: #ffffff;
+            border-bottom: 1px solid #f1f5f9;
+            color: #0f172a;
         }
+        .theme-specialty .tent-title { color: #0f172a; font-weight: 800; }
+        .theme-specialty .tent-badge { background: #f8fafc; color: #475569; border: 1px solid #e2e8f0; }
+        .theme-specialty .tent-table { background: #0f172a; color: #ffffff; font-weight: 700; }
+        .theme-specialty .tent-qr-box { background: #ffffff; border: 1.5px solid #e2e8f0; }
+        .theme-specialty .tent-hook { color: #0f172a; }
+        .theme-specialty .tent-sub { color: #64748b; }
+        .theme-specialty .tent-stars { color: #f59e0b; }
+        .theme-specialty .tent-gift { background: #f8fafc; border: 1px dashed #cbd5e1; color: #0f172a; }
+        .theme-specialty .tent-meta { background: #f8fafc; border: 1px solid #f1f5f9; color: #64748b; }
+
+        /* 2. Dark Luxury (Премиум стейкхаус & лаунж) */
+        .theme-dark-luxury .tent-card {
+            background: #0b0f19;
+            border: 1.5px solid #d97706;
+            color: #f8fafc;
+            font-family: 'Cinzel', 'Playfair Display', serif;
+        }
+        .theme-dark-luxury .tent-header {
+            background: linear-gradient(180deg, #1c150c 0%, #0b0f19 100%);
+            border-bottom: 1px solid #78350f;
+            color: #f59e0b;
+        }
+        .theme-dark-luxury .tent-title { color: #fbbf24; letter-spacing: 0.05em; font-weight: 900; }
+        .theme-dark-luxury .tent-badge { background: #1c140a; color: #f59e0b; border: 1px solid #78350f; }
+        .theme-dark-luxury .tent-table { background: linear-gradient(135deg, #d97706 0%, #b45309 100%); color: #0b0f19; font-weight: 900; }
+        .theme-dark-luxury .tent-qr-box { background: #ffffff; border: 3px solid #d97706; box-shadow: 0 0 20px rgba(217, 119, 6, 0.25); }
+        .theme-dark-luxury .tent-hook { color: #fef3c7; }
+        .theme-dark-luxury .tent-sub { color: #94a3b8; }
+        .theme-dark-luxury .tent-stars { color: #fbbf24; }
+        .theme-dark-luxury .tent-gift { background: #181410; border: 1px dashed #d97706; color: #fbbf24; }
+        .theme-dark-luxury .tent-meta { background: #111827; border: 1px solid #374151; color: #9ca3af; }
+
+        /* 3. Craft & Eco (Натуральный крафт) */
+        .theme-craft-eco .tent-card {
+            background: #f7f1e5;
+            border: 2px dashed #bfa07a;
+            color: #3f2e1e;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .theme-craft-eco .tent-header {
+            background: #ede0cc;
+            border-bottom: 2px solid #d5c0a5;
+            color: #365314;
+        }
+        .theme-craft-eco .tent-title { color: #3f2e1e; font-weight: 800; }
+        .theme-craft-eco .tent-badge { background: #fdfaf5; color: #365314; border: 1px solid #d5c0a5; }
+        .theme-craft-eco .tent-table { background: #3f2e1e; color: #f7f1e5; font-weight: 800; }
+        .theme-craft-eco .tent-qr-box { background: #ffffff; border: 2px solid #bfa07a; }
+        .theme-craft-eco .tent-hook { color: #291e13; }
+        .theme-craft-eco .tent-sub { color: #6b5541; }
+        .theme-craft-eco .tent-stars { color: #d97706; }
+        .theme-craft-eco .tent-gift { background: #ede0cc; border: 1px dashed #8c6e54; color: #2d4a22; }
+        .theme-craft-eco .tent-meta { background: #ede0cc; border: 1px solid #d5c0a5; color: #574431; }
+
+        /* 4. Neon Street (Кибер-стритфуд & бар) */
+        .theme-neon-street .tent-card {
+            background: #050811;
+            border: 2px solid #84cc16;
+            color: #f8fafc;
+            font-family: 'Space Grotesk', 'Plus Jakarta Sans', sans-serif;
+        }
+        .theme-neon-street .tent-header {
+            background: linear-gradient(135deg, #090e1c 0%, #15102a 100%);
+            border-bottom: 2px solid #84cc16;
+            color: #a3e635;
+        }
+        .theme-neon-street .tent-title { color: #ffffff; text-shadow: 0 0 10px rgba(132, 204, 22, 0.4); }
+        .theme-neon-street .tent-badge { background: #0e1e07; color: #a3e635; border: 1px solid #4d7c0f; }
+        .theme-neon-street .tent-table { background: #84cc16; color: #050811; font-weight: 900; }
+        .theme-neon-street .tent-qr-box { background: #ffffff; border: 3px solid #c084fc; box-shadow: 0 0 20px rgba(192, 132, 252, 0.3); }
+        .theme-neon-street .tent-hook { color: #ffffff; }
+        .theme-neon-street .tent-sub { color: #94a3b8; }
+        .theme-neon-street .tent-stars { color: #a3e635; }
+        .theme-neon-street .tent-gift { background: #0c1427; border: 1px dashed #84cc16; color: #a3e635; }
+        .theme-neon-street .tent-meta { background: #0b1120; border: 1px solid #1e293b; color: #94a3b8; }
+
+        /* 5. Caucasian Heritage (Кавказская классика) */
+        .theme-caucasian-heritage .tent-card {
+            background: #fcfbf7;
+            border: 3px double #b45309;
+            color: #064e3b;
+            font-family: 'Playfair Display', 'Cinzel', serif;
+        }
+        .theme-caucasian-heritage .tent-header {
+            background: linear-gradient(135deg, #064e3b 0%, #022c22 100%);
+            border-bottom: 3px solid #d97706;
+            color: #fef3c7;
+        }
+        .theme-caucasian-heritage .tent-title { color: #ffffff; font-weight: 800; }
+        .theme-caucasian-heritage .tent-badge { background: #042f2e; color: #fcd34d; border: 1px solid #0f766e; }
+        .theme-caucasian-heritage .tent-table { background: #f59e0b; color: #064e3b; font-weight: 900; }
+        .theme-caucasian-heritage .tent-qr-box { background: #ffffff; border: 3px double #b45309; }
+        .theme-caucasian-heritage .tent-hook { color: #064e3b; }
+        .theme-caucasian-heritage .tent-sub { color: #334155; }
+        .theme-caucasian-heritage .tent-stars { color: #f59e0b; }
+        .theme-caucasian-heritage .tent-gift { background: #f0fdf4; border: 1px dashed #059669; color: #064e3b; }
+        .theme-caucasian-heritage .tent-meta { background: #f0fdf4; border: 1px solid #bbf7d0; color: #166534; }
+
+        /* 6. Pastel Bakery (Воздушный десерт & кондитерская) */
+        .theme-pastel-bakery .tent-card {
+            background: #fffafb;
+            border: 2px solid #fbcfe8;
+            color: #831843;
+            font-family: 'Comfortaa', 'Plus Jakarta Sans', cursive;
+        }
+        .theme-pastel-bakery .tent-header {
+            background: linear-gradient(135deg, #f472b6 0%, #fb7185 100%);
+            border-bottom: 2px solid #f9a8d4;
+            color: #ffffff;
+        }
+        .theme-pastel-bakery .tent-title { color: #ffffff; }
+        .theme-pastel-bakery .tent-badge { background: rgba(255, 255, 255, 0.25); color: #ffffff; border: 1px solid rgba(255, 255, 255, 0.4); }
+        .theme-pastel-bakery .tent-table { background: #ffffff; color: #db2777; font-weight: 800; }
+        .theme-pastel-bakery .tent-qr-box { background: #ffffff; border: 3px solid #f9a8d4; box-shadow: 0 4px 15px rgba(244, 114, 182, 0.2); }
+        .theme-pastel-bakery .tent-hook { color: #831843; }
+        .theme-pastel-bakery .tent-sub { color: #9d174d; }
+        .theme-pastel-bakery .tent-stars { color: #f43f5e; }
+        .theme-pastel-bakery .tent-gift { background: #fdf2f8; border: 1px dashed #f472b6; color: #be185d; }
+        .theme-pastel-bakery .tent-meta { background: #fdf2f8; border: 1px solid #fbcfe8; color: #9d174d; }
+
+        /* 7. Italian Trattoria (Средиземноморский) */
+        .theme-italian-trattoria .tent-card {
+            background: #fffdf9;
+            border: 2px solid #ea580c;
+            color: #7c2d12;
+            font-family: 'Playfair Display', 'Plus Jakarta Sans', serif;
+        }
+        .theme-italian-trattoria .tent-header {
+            background: linear-gradient(135deg, #c2410c 0%, #9a3412 100%);
+            border-bottom: 2px solid #ea580c;
+            color: #ffffff;
+        }
+        .theme-italian-trattoria .tent-title { color: #ffffff; }
+        .theme-italian-trattoria .tent-badge { background: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
+        .theme-italian-trattoria .tent-table { background: #15803d; color: #ffffff; font-weight: 800; }
+        .theme-italian-trattoria .tent-qr-box { background: #ffffff; border: 3px solid #fb923c; }
+        .theme-italian-trattoria .tent-hook { color: #7c2d12; }
+        .theme-italian-trattoria .tent-sub { color: #78350f; }
+        .theme-italian-trattoria .tent-stars { color: #f59e0b; }
+        .theme-italian-trattoria .tent-gift { background: #fff7ed; border: 1px dashed #ea580c; color: #9a3412; }
+        .theme-italian-trattoria .tent-meta { background: #fff7ed; border: 1px solid #fed7aa; color: #9a3412; }
+
+        /* 8. Night Lounge (Кальянная & ночной клуб) */
+        .theme-night-lounge .tent-card {
+            background: #030712;
+            border: 2px solid #7c3aed;
+            color: #f8fafc;
+            font-family: 'Inter', sans-serif;
+        }
+        .theme-night-lounge .tent-header {
+            background: linear-gradient(135deg, #1e1b4b 0%, #030712 100%);
+            border-bottom: 2px solid #7c3aed;
+            color: #c084fc;
+        }
+        .theme-night-lounge .tent-title { color: #ffffff; }
+        .theme-night-lounge .tent-badge { background: #2e1065; color: #d8b4fe; border: 1px solid #6b21a8; }
+        .theme-night-lounge .tent-table { background: linear-gradient(135deg, #9333ea 0%, #4f46e5 100%); color: #ffffff; font-weight: 800; }
+        .theme-night-lounge .tent-qr-box { background: #ffffff; border: 3px solid #a855f7; box-shadow: 0 0 25px rgba(168, 85, 247, 0.4); }
+        .theme-night-lounge .tent-hook { color: #ffffff; }
+        .theme-night-lounge .tent-sub { color: #94a3b8; }
+        .theme-night-lounge .tent-stars { color: #c084fc; }
+        .theme-night-lounge .tent-gift { background: #130e2a; border: 1px dashed #a855f7; color: #e9d5ff; }
+        .theme-night-lounge .tent-meta { background: #111827; border: 1px solid #374151; color: #94a3b8; }
+
+        /* 9. Fast Casual (Современная столовая & бистро) */
+        .theme-fast-casual .tent-card {
+            background: #ffffff;
+            border: 3px solid #2563eb;
+            color: #0f172a;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+        }
+        .theme-fast-casual .tent-header {
+            background: linear-gradient(135deg, #1d4ed8 0%, #2563eb 100%);
+            border-bottom: 2px solid #1e40af;
+            color: #ffffff;
+        }
+        .theme-fast-casual .tent-title { color: #ffffff; }
+        .theme-fast-casual .tent-badge { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+        .theme-fast-casual .tent-table { background: #ea580c; color: #ffffff; font-weight: 800; }
+        .theme-fast-casual .tent-qr-box { background: #ffffff; border: 3px solid #3b82f6; }
+        .theme-fast-casual .tent-hook { color: #0f172a; }
+        .theme-fast-casual .tent-sub { color: #475569; }
+        .theme-fast-casual .tent-stars { color: #f59e0b; }
+        .theme-fast-casual .tent-gift { background: #eff6ff; border: 1px dashed #3b82f6; color: #1e40af; }
+        .theme-fast-casual .tent-meta { background: #eff6ff; border: 1px solid #bfdbfe; color: #1d4ed8; }
+
+        /* 10. Family & Kids (Семейное кафе) */
+        .theme-family-kids .tent-card {
+            background: #fefce8;
+            border: 3px solid #facc15;
+            color: #713f12;
+            font-family: 'Comfortaa', 'Plus Jakarta Sans', cursive;
+        }
+        .theme-family-kids .tent-header {
+            background: linear-gradient(135deg, #f59e0b 0%, #eab308 100%);
+            border-bottom: 2px solid #ca8a04;
+            color: #ffffff;
+        }
+        .theme-family-kids .tent-title { color: #ffffff; }
+        .theme-family-kids .tent-badge { background: #fef08a; color: #854d0e; border: 1px solid #fde047; }
+        .theme-family-kids .tent-table { background: #0284c7; color: #ffffff; font-weight: 800; }
+        .theme-family-kids .tent-qr-box { background: #ffffff; border: 3px solid #fde047; }
+        .theme-family-kids .tent-hook { color: #713f12; }
+        .theme-family-kids .tent-sub { color: #854d0e; }
+        .theme-family-kids .tent-stars { color: #f59e0b; }
+        .theme-family-kids .tent-gift { background: #fef9c3; border: 1px dashed #eab308; color: #713f12; }
+        .theme-family-kids .tent-meta { background: #fef9c3; border: 1px solid #fef08a; color: #854d0e; }
+
+        /* 11. Vintage Bistro (Винтажная ретро-газета) */
+        .theme-vintage-bistro .tent-card {
+            background: #f5f0e6;
+            border: 3px double #44403c;
+            color: #1c1917;
+            font-family: 'Playfair Display', serif;
+        }
+        .theme-vintage-bistro .tent-header {
+            background: #e7e0d3;
+            border-bottom: 2px solid #44403c;
+            color: #1c1917;
+        }
+        .theme-vintage-bistro .tent-title { color: #1c1917; font-weight: 800; text-transform: uppercase; }
+        .theme-vintage-bistro .tent-badge { background: #d6ccbe; color: #292524; border: 1px solid #78716c; }
+        .theme-vintage-bistro .tent-table { background: #1c1917; color: #f5f0e6; font-weight: 800; }
+        .theme-vintage-bistro .tent-qr-box { background: #ffffff; border: 2px solid #44403c; }
+        .theme-vintage-bistro .tent-hook { color: #1c1917; }
+        .theme-vintage-bistro .tent-sub { color: #44403c; }
+        .theme-vintage-bistro .tent-stars { color: #78716c; }
+        .theme-vintage-bistro .tent-gift { background: #e7e0d3; border: 1px dashed #78716c; color: #1c1917; }
+        .theme-vintage-bistro .tent-meta { background: #e7e0d3; border: 1px solid #a8a29e; color: #292524; }
+
+        /* 12. Acrylic Minimal (Прозрачный акрил / Эко-печать) */
+        .theme-acrylic-minimal .tent-card {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            color: #0f172a;
+            font-family: 'Inter', sans-serif;
+        }
+        .theme-acrylic-minimal .tent-header {
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            color: #0f172a;
+        }
+        .theme-acrylic-minimal .tent-title { color: #0f172a; font-weight: 700; }
+        .theme-acrylic-minimal .tent-badge { background: #f8fafc; color: #334155; border: 1px solid #cbd5e1; }
+        .theme-acrylic-minimal .tent-table { background: #ffffff; color: #0f172a; border: 1.5px solid #0f172a; font-weight: 700; }
+        .theme-acrylic-minimal .tent-qr-box { background: #ffffff; border: 1px solid #e2e8f0; }
+        .theme-acrylic-minimal .tent-hook { color: #0f172a; }
+        .theme-acrylic-minimal .tent-sub { color: #64748b; }
+        .theme-acrylic-minimal .tent-stars { color: #f59e0b; }
+        .theme-acrylic-minimal .tent-gift { background: #ffffff; border: 1px dashed #94a3b8; color: #334155; }
+        .theme-acrylic-minimal .tent-meta { background: #f8fafc; border: 1px solid #e2e8f0; color: #64748b; }
+
+        /* --- НАСТРОЙКИ ПЕЧАТИ (PRINT CSS) --- */
         @page {
             size: A4 portrait;
             margin: 8mm;
@@ -41,6 +304,11 @@
                 grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
                 gap: 16px !important;
             }
+            .print-sheet.layout-4up {
+                grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+                grid-template-rows: repeat(2, minmax(0, 1fr)) !important;
+                gap: 12px !important;
+            }
             .print-sheet:last-child {
                 page-break-after: auto !important;
                 break-after: auto !important;
@@ -52,79 +320,361 @@
                 break-inside: avoid !important;
                 height: 100% !important;
             }
+            #live-preview-section {
+                display: none !important;
+            }
+            #print-sheets-container {
+                display: block !important;
+            }
+        }
+
+        /* Активная карточка темы в панели */
+        .theme-btn.active {
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.35);
+            transform: scale(1.02);
         }
     </style>
 </head>
-<body class="bg-slate-100 min-h-screen p-4 sm:p-8">
+<body class="bg-slate-900 min-h-screen text-slate-100 p-3 sm:p-6" id="body-root">
 
-    <!-- Верхняя панель управления (скрыта при печати) -->
-    <div class="no-print max-w-4xl mx-auto mb-8 bg-white p-5 rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-200 flex flex-wrap items-center justify-between gap-4">
-        <div>
-            <h1 class="text-lg font-extrabold text-slate-900 flex items-center gap-2">
-                <span>🖨️ Массовая печать столиков</span>
-                <span class="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-indigo-100 text-indigo-700">{{ business.name }}</span>
-            </h1>
-            <p class="text-xs text-slate-500 mt-0.5">
-                Автоматическая раскладка по 2 карточки на лист А4 с индивидуальными QR-кодами столов.
-            </p>
+    <!-- ВЕРХНЯЯ ПАНЕЛЬ СТУДИИ (no-print) -->
+    <header class="no-print max-w-7xl mx-auto mb-6 bg-slate-800/90 backdrop-blur-md p-4 sm:p-5 rounded-3xl border border-slate-700 shadow-2xl flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3.5">
+            <div class="w-11 h-11 rounded-2xl bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-xl shadow-inner">
+                🎨
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h1 class="text-base sm:text-lg font-black text-white tracking-tight">Студия тейбл-тентов GeoPulse</h1>
+                    <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">12 стилей</span>
+                </div>
+                <p class="text-xs text-slate-400">
+                    Настройте стиль под интерьер заведения <strong class="text-slate-200">«{{ business.name }}»</strong> и распечатайте на А4
+                </p>
+            </div>
         </div>
 
-        <div class="flex items-center gap-3">
-            <form method="GET" class="flex items-center gap-2">
-                <label class="text-xs font-bold text-slate-700">Столов:</label>
-                <input type="number" name="tables" value="{{ tables_count }}" min="1" max="100" class="w-16 text-center text-sm font-bold p-2 border border-slate-300 rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
-                <button type="submit" class="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold py-2 px-3 rounded-xl transition">
-                    Обновить
-                </button>
-            </form>
-
-            <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-5 rounded-xl shadow-lg shadow-indigo-600/25 flex items-center gap-2 text-xs transition active:scale-[0.98]">
+        <div class="flex items-center flex-wrap gap-2.5">
+            <button onclick="window.print()" class="bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700 text-white font-bold py-2.5 px-5 rounded-2xl shadow-lg shadow-indigo-600/30 flex items-center gap-2 text-xs transition active:scale-[0.98]">
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
-                Распечатать все {{ tables_count }} шт. (Ctrl + P)
+                Распечатать все (Ctrl + P)
             </button>
 
-            <a href="/dashboard/{{ business_id }}" class="text-slate-500 hover:text-slate-800 text-xs font-semibold py-2 px-3 transition">
+            <button onclick="copyShareLink()" id="copy-btn" class="bg-slate-700 hover:bg-slate-600 text-slate-200 text-xs font-semibold py-2.5 px-4 rounded-2xl border border-slate-600 transition flex items-center gap-1.5">
+                <span>🔗</span>
+                <span>Скопировать макет</span>
+            </button>
+
+            <a href="/dashboard/{{ business_id }}" class="text-slate-400 hover:text-white text-xs font-semibold py-2.5 px-3 transition">
                 ← В дашборд
             </a>
         </div>
+    </header>
+
+    <!-- ПАНЕЛЬ КОНСТРУКТОРА (no-print) -->
+    <div class="no-print max-w-7xl mx-auto mb-8 bg-slate-800/70 p-5 rounded-3xl border border-slate-700/80 shadow-xl space-y-5">
+        
+        <!-- 1. СЕЛЕКТОР 12 СТИЛЕЙ -->
+        <div>
+            <div class="flex items-center justify-between mb-3">
+                <label class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                    <span>1. Выберите стиль под интерьер заведения:</span>
+                    <span id="current-theme-name" class="text-indigo-400 font-extrabold normal-case">☕ Скандинавский минимализм</span>
+                </label>
+                <span class="text-[11px] text-slate-400">Кликните по карточке для моментальной смены темы</span>
+            </div>
+
+            <!-- Сетка из 12 тем -->
+            <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-2.5" id="themes-grid">
+                
+                <!-- 1. Specialty -->
+                <button type="button" onclick="setTheme('specialty', '☕ Скандинавский минимализм')" data-theme-id="specialty" class="theme-btn active p-2.5 rounded-2xl bg-slate-800 border-2 border-slate-700 text-left transition flex items-center gap-2.5 hover:border-slate-500">
+                    <span class="w-7 h-7 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-xs shrink-0 shadow-sm">☕</span>
+                    <div class="truncate">
+                        <div class="text-xs font-bold text-white truncate">Specialty</div>
+                        <div class="text-[10px] text-slate-400 truncate">Кофейня</div>
+                    </div>
+                </button>
+
+                <!-- 2. Dark Luxury -->
+                <button type="button" onclick="setTheme('dark-luxury', '🥩 Dark Luxury (Стейкхаус & Лаунж)')" data-theme-id="dark-luxury" class="theme-btn p-2.5 rounded-2xl bg-slate-800 border-2 border-slate-700 text-left transition flex items-center gap-2.5 hover:border-slate-500">
+                    <span class="w-7 h-7 rounded-xl bg-amber-500/20 border border-amber-500/50 flex items-center justify-center text-xs shrink-0 text-amber-300 shadow-sm">🥩</span>
+                    <div class="truncate">
+                        <div class="text-xs font-bold text-white truncate">Dark Luxury</div>
+                        <div class="text-[10px] text-amber-400/80 truncate">Стейкхаус</div>
+                    </div>
+                </button>
+
+                <!-- 3. Craft & Eco -->
+                <button type="button" onclick="setTheme('craft-eco', '🌿 Натуральный крафт & Эко')" data-theme-id="craft-eco" class="theme-btn p-2.5 rounded-2xl bg-slate-800 border-2 border-slate-700 text-left transition flex items-center gap-2.5 hover:border-slate-500">
+                    <span class="w-7 h-7 rounded-xl bg-amber-100 border border-amber-300 text-amber-800 flex items-center justify-center text-xs shrink-0 shadow-sm">🌿</span>
+                    <div class="truncate">
+                        <div class="text-xs font-bold text-white truncate">Craft & Eco</div>
+                        <div class="text-[10px] text-emerald-400/80 truncate">Крафт/Пекарня</div>
+                    </div>
+                </button>
+
+                <!-- 4. Neon Street -->
+                <button type="button" onclick="setTheme('neon-street', '⚡ Neon Street (Кибер-стритфуд & Бар)')" data-theme-id="neon-street" class="theme-btn p-2.5 rounded-2xl bg-slate-800 border-2 border-slate-700 text-left transition flex items-center gap-2.5 hover:border-slate-500">
+                    <span class="w-7 h-7 rounded-xl bg-lime-950 border border-lime-400 text-lime-400 flex items-center justify-center text-xs shrink-0 shadow-sm">⚡</span>
+                    <div class="truncate">
+                        <div class="text-xs font-bold text-white truncate">Neon Street</div>
+                        <div class="text-[10px] text-lime-400/80 truncate">Стритфуд/Бар</div>
+                    </div>
+                </button>
+
+                <!-- 5. Caucasian Heritage -->
+                <button type="button" onclick="setTheme('caucasian-heritage', '👑 Кавказская классика & Банкет')" data-theme-id="caucasian-heritage" class="theme-btn p-2.5 rounded-2xl bg-slate-800 border-2 border-slate-700 text-left transition flex items-center gap-2.5 hover:border-slate-500">
+                    <span class="w-7 h-7 rounded-xl bg-emerald-950 border border-amber-500 text-amber-300 flex items-center justify-center text-xs shrink-0 shadow-sm">👑</span>
+                    <div class="truncate">
+                        <div class="text-xs font-bold text-white truncate">Кавказ Классик</div>
+                        <div class="text-[10px] text-amber-400/80 truncate">Ресторан/Банкет</div>
+                    </div>
+                </button>
+
+                <!-- 6. Pastel Bakery -->
+                <button type="button" onclick="setTheme('pastel-bakery', '🧁 Воздушный десерт & Кондитерская')" data-theme-id="pastel-bakery" class="theme-btn p-2.5 rounded-2xl bg-slate-800 border-2 border-slate-700 text-left transition flex items-center gap-2.5 hover:border-slate-500">
+                    <span class="w-7 h-7 rounded-xl bg-pink-100 border border-pink-300 text-pink-600 flex items-center justify-center text-xs shrink-0 shadow-sm">🧁</span>
+                    <div class="truncate">
+                        <div class="text-xs font-bold text-white truncate">Pastel Bakery</div>
+                        <div class="text-[10px] text-pink-400/80 truncate">Кондитерская</div>
+                    </div>
+                </button>
+
+                <!-- 7. Italian Trattoria -->
+                <button type="button" onclick="setTheme('italian-trattoria', '🍕 Средиземноморский & Траттория')" data-theme-id="italian-trattoria" class="theme-btn p-2.5 rounded-2xl bg-slate-800 border-2 border-slate-700 text-left transition flex items-center gap-2.5 hover:border-slate-500">
+                    <span class="w-7 h-7 rounded-xl bg-orange-100 border border-orange-400 text-orange-700 flex items-center justify-center text-xs shrink-0 shadow-sm">🍕</span>
+                    <div class="truncate">
+                        <div class="text-xs font-bold text-white truncate">Trattoria</div>
+                        <div class="text-[10px] text-orange-400/80 truncate">Пиццерия/Паста</div>
+                    </div>
+                </button>
+
+                <!-- 8. Night Lounge -->
+                <button type="button" onclick="setTheme('night-lounge', '🌙 Night Lounge (Кальянная & Клуб)')" data-theme-id="night-lounge" class="theme-btn p-2.5 rounded-2xl bg-slate-800 border-2 border-slate-700 text-left transition flex items-center gap-2.5 hover:border-slate-500">
+                    <span class="w-7 h-7 rounded-xl bg-purple-950 border border-purple-400 text-purple-300 flex items-center justify-center text-xs shrink-0 shadow-sm">🌙</span>
+                    <div class="truncate">
+                        <div class="text-xs font-bold text-white truncate">Night Lounge</div>
+                        <div class="text-[10px] text-purple-400/80 truncate">Лаунж/Бар</div>
+                    </div>
+                </button>
+
+                <!-- 9. Fast Casual -->
+                <button type="button" onclick="setTheme('fast-casual', '🚀 Современное бистро & Столовая')" data-theme-id="fast-casual" class="theme-btn p-2.5 rounded-2xl bg-slate-800 border-2 border-slate-700 text-left transition flex items-center gap-2.5 hover:border-slate-500">
+                    <span class="w-7 h-7 rounded-xl bg-blue-100 border border-blue-400 text-blue-700 flex items-center justify-center text-xs shrink-0 shadow-sm">🚀</span>
+                    <div class="truncate">
+                        <div class="text-xs font-bold text-white truncate">Fast Casual</div>
+                        <div class="text-[10px] text-blue-400/80 truncate">Бистро/Столовая</div>
+                    </div>
+                </button>
+
+                <!-- 10. Family & Kids -->
+                <button type="button" onclick="setTheme('family-kids', '🎈 Семейное кафе & Пиццерия')" data-theme-id="family-kids" class="theme-btn p-2.5 rounded-2xl bg-slate-800 border-2 border-slate-700 text-left transition flex items-center gap-2.5 hover:border-slate-500">
+                    <span class="w-7 h-7 rounded-xl bg-yellow-100 border border-yellow-400 text-yellow-800 flex items-center justify-center text-xs shrink-0 shadow-sm">🎈</span>
+                    <div class="truncate">
+                        <div class="text-xs font-bold text-white truncate">Family & Kids</div>
+                        <div class="text-[10px] text-yellow-400/80 truncate">Семейное кафе</div>
+                    </div>
+                </button>
+
+                <!-- 11. Vintage Bistro -->
+                <button type="button" onclick="setTheme('vintage-bistro', '📰 Ретро-газета & Винтаж')" data-theme-id="vintage-bistro" class="theme-btn p-2.5 rounded-2xl bg-slate-800 border-2 border-slate-700 text-left transition flex items-center gap-2.5 hover:border-slate-500">
+                    <span class="w-7 h-7 rounded-xl bg-stone-200 border border-stone-400 text-stone-800 flex items-center justify-center text-xs shrink-0 shadow-sm font-serif">📰</span>
+                    <div class="truncate">
+                        <div class="text-xs font-bold text-white truncate">Vintage Bistro</div>
+                        <div class="text-[10px] text-stone-400/80 truncate">Ретро/Газета</div>
+                    </div>
+                </button>
+
+                <!-- 12. Acrylic Minimal -->
+                <button type="button" onclick="setTheme('acrylic-minimal', '💎 Прозрачный акрил (Эко-печать)')" data-theme-id="acrylic-minimal" class="theme-btn p-2.5 rounded-2xl bg-slate-800 border-2 border-slate-700 text-left transition flex items-center gap-2.5 hover:border-slate-500">
+                    <span class="w-7 h-7 rounded-xl bg-slate-100 border border-slate-300 text-slate-700 flex items-center justify-center text-xs shrink-0 shadow-sm">💎</span>
+                    <div class="truncate">
+                        <div class="text-xs font-bold text-white truncate">Acrylic Minimal</div>
+                        <div class="text-[10px] text-slate-400 truncate">Под акрил</div>
+                    </div>
+                </button>
+
+            </div>
+        </div>
+
+        <!-- 2. НАСТРОЙКИ ТЕКСТА, ХУКА И ПОДАРКА -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-4 border-t border-slate-700/80">
+            
+            <!-- Заголовок-крючок (CTA) -->
+            <div>
+                <label for="hook-select" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+                    2. Крючок-заголовок (CTA):
+                </label>
+                <select id="hook-select" onchange="updateHook(this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                    <option value="Как вам у нас?">«Как вам у нас?» (Классический)</option>
+                    <option value="Прямая связь с шеф-поваром">«Прямая связь с шеф-поваром»</option>
+                    <option value="Оцените визит — комплимент от шефа!">«Оцените визит — комплимент от шефа!»</option>
+                    <option value="Помогите нам стать лучшим местом">«Помогите нам стать лучшим местом»</option>
+                    <option value="Контроль качества обслуживания">«Контроль качества обслуживания»</option>
+                    <option value="custom">Свой текст...</option>
+                </select>
+                <input type="text" id="custom-hook-input" oninput="updateCustomHook(this.value)" placeholder="Введите свой заголовок..." class="hidden w-full mt-2 bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:ring-2 focus:ring-indigo-500 outline-none">
+            </div>
+
+            <!-- Подарок / Комплимент за отзыв -->
+            <div>
+                <label for="gift-input" class="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
+                    3. Подарок за отзыв (Бонус гостю):
+                </label>
+                <input type="text" id="gift-input" oninput="updateGift(this.value)" placeholder="Например: 🎁 Десерт или кофе к следующему заказу" value="🎁 Покажите отзыв официанту и получите комплимент от шефа" class="w-full bg-slate-900 border border-slate-700 rounded-xl p-2.5 text-xs text-white focus:ring-2 focus:ring-indigo-500 outline-none">
+                <p class="text-[10px] text-slate-400 mt-1">Оставьте пустым, если не хотите давать подарок</p>
+            </div>
+
+            <!-- Количество столов и раскладка -->
+            <div>
+                <div class="flex items-center justify-between mb-1.5">
+                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-300">
+                        4. Столиков в зале:
+                    </label>
+                    <span class="text-xs font-extrabold text-indigo-400" id="tables-count-label">{{ tables_count }} шт.</span>
+                </div>
+                
+                <form method="GET" class="flex items-center gap-2">
+                    <input type="hidden" name="theme" id="form-theme-input" value="{{ theme or 'specialty' }}">
+                    <input type="hidden" name="hook" id="form-hook-input" value="{{ hook or '' }}">
+                    <input type="hidden" name="gift" id="form-gift-input" value="{{ gift or '' }}">
+                    
+                    <input type="number" name="tables" id="tables-input" value="{{ tables_count }}" min="1" max="100" class="w-20 text-center text-xs font-bold p-2.5 bg-slate-900 border border-slate-700 text-white rounded-xl focus:ring-2 focus:ring-indigo-500 outline-none">
+                    
+                    <button type="submit" class="bg-slate-700 hover:bg-slate-600 text-white text-xs font-bold py-2.5 px-3 rounded-xl transition">
+                        Применить
+                    </button>
+                    
+                    <div class="flex items-center gap-1 ml-auto">
+                        <button type="button" onclick="setQuickTables(5)" class="px-2 py-1 rounded-lg bg-slate-900 hover:bg-slate-700 text-[11px] font-semibold">5</button>
+                        <button type="button" onclick="setQuickTables(10)" class="px-2 py-1 rounded-lg bg-slate-900 hover:bg-slate-700 text-[11px] font-semibold">10</button>
+                        <button type="button" onclick="setQuickTables(15)" class="px-2 py-1 rounded-lg bg-slate-900 hover:bg-slate-700 text-[11px] font-semibold">15</button>
+                        <button type="button" onclick="setQuickTables(20)" class="px-2 py-1 rounded-lg bg-slate-900 hover:bg-slate-700 text-[11px] font-semibold">20</button>
+                    </div>
+                </form>
+            </div>
+
+        </div>
+
+        <!-- 3. ПЕРЕКЛЮЧАТЕЛЬ РЕЖИМА ПРОСМОТРА -->
+        <div class="flex items-center justify-between pt-3 border-t border-slate-700/80">
+            <div class="flex items-center gap-2">
+                <button type="button" onclick="switchView('preview')" id="view-preview-btn" class="px-4 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white transition shadow-sm">
+                    👀 Живое превью карточки
+                </button>
+                <button type="button" onclick="switchView('sheets')" id="view-sheets-btn" class="px-4 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition">
+                    📑 Раскладка А4 (все {{ tables_count }} шт.)
+                </button>
+            </div>
+
+            <div class="text-[11px] text-slate-400 hidden sm:block">
+                ⚡ Для печати нажмите <kbd class="px-1.5 py-0.5 rounded bg-slate-700 text-slate-200 font-mono text-[10px]">Ctrl + P</kbd>
+            </div>
+        </div>
+
     </div>
 
-    <!-- Листы карточек для печати (раскладка по 2 на лист А4) -->
-    <div class="max-w-4xl mx-auto space-y-8 print:space-y-0">
-        {% for pair in tables_range|batch(2) %}
-        <div class="print-sheet grid grid-cols-1 md:grid-cols-2 gap-8 print:gap-6">
-            {% for table in pair %}
-            <div class="bulk-card bg-white rounded-[32px] overflow-hidden shadow-xl border border-slate-200 flex flex-col text-center relative group">
-                
-                <!-- Индикатор линии разреза для типографии -->
-                <div class="no-print absolute top-2 right-2 text-[10px] text-slate-400 font-mono">
-                    Линия нарезки ✂️
-                </div>
+    <!-- КОНТЕЙНЕР ХОЛСТА (Canvas) С ВЫБРАННОЙ ТЕМОЙ -->
+    <div id="studio-canvas" class="theme-specialty">
 
-                <!-- Шапка с градиентом -->
-                <header class="gradient-header text-white pt-6 pb-5 px-5 relative flex flex-col items-center">
-                    <div class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-white/20 backdrop-blur-md text-white text-[11px] font-bold mb-2 shadow-sm border border-white/25">
+        <!-- СЕКЦИЯ 1: ЖИВОЕ ПРЕВЬЮ ОДНОЙ КАРТОЧКИ (no-print) -->
+        <div id="live-preview-section" class="no-print max-w-md mx-auto mb-12 flex flex-col items-center">
+            <div class="w-full text-center mb-3">
+                <span class="text-xs font-bold text-slate-400 uppercase tracking-widest">Образец столика №1</span>
+            </div>
+
+            <!-- Сама карточка в реальном масштабе -->
+            <div class="tent-card w-full rounded-[32px] overflow-hidden shadow-2xl transition-all duration-300 flex flex-col text-center relative">
+                
+                <header class="tent-header pt-7 pb-6 px-6 relative flex flex-col items-center">
+                    <div class="tent-badge inline-flex items-center gap-1.5 px-3.5 py-1 rounded-full text-xs font-bold mb-3 shadow-sm">
                         <span>✨</span>
                         <span>Обратная связь</span>
                     </div>
 
-                    <h2 class="text-xl font-black tracking-tight text-white mb-1">
+                    <h2 class="tent-title text-2xl tracking-tight mb-1">
                         {{ business.name }}
                     </h2>
 
-                    <div class="mt-1 px-4 py-1 rounded-full bg-white text-indigo-700 text-xs font-black uppercase tracking-wider shadow-sm">
-                        Столик №{{ table }}
+                    <div class="tent-table mt-2 px-4 py-1 rounded-full text-xs uppercase tracking-wider shadow-sm">
+                        Столик №1
                     </div>
 
-                    <div class="flex items-center gap-1 mt-2 text-amber-300 text-xs">
+                    <div class="tent-stars flex items-center gap-1 mt-3 text-sm">
                         <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
                     </div>
                 </header>
 
-                <!-- Основная часть с цветным QR-кодом -->
-                <main class="p-6 flex flex-col items-center bg-white flex-1 justify-between">
-                    <div class="relative p-[4px] rounded-[24px] gradient-border shadow-lg shadow-pink-500/10 mb-4">
-                        <div class="bg-white p-2.5 rounded-[20px] flex items-center justify-center">
+                <main class="p-7 flex flex-col items-center flex-1 justify-between">
+                    <div class="tent-qr-box relative p-3 rounded-[24px] mb-5 shadow-sm">
+                        <img 
+                            src="/api/qr/{{ business_id }}?v=2&table=1" 
+                            alt="QR-код для отзыва" 
+                            class="w-48 h-48 object-contain select-none rounded-xl"
+                            loading="eager"
+                        >
+                    </div>
+
+                    <div class="space-y-1.5 mb-4">
+                        <h3 class="tent-hook text-lg font-black tracking-tight" id="preview-hook-text">
+                            Как вам у нас?
+                        </h3>
+                        <p class="tent-sub text-xs leading-relaxed max-w-[260px] mx-auto">
+                            Наведите камеру смартфона, чтобы поставить оценку или поделиться впечатлениями ❤️
+                        </p>
+                    </div>
+
+                    <!-- Плашка подарка (если заполнено) -->
+                    <div id="preview-gift-badge" class="tent-gift w-full py-2.5 px-3 rounded-2xl text-xs font-bold mb-4 shadow-sm">
+                        🎁 Покажите отзыв официанту и получите комплимент от шефа
+                    </div>
+
+                    <div class="tent-meta inline-flex items-center gap-3 px-4 py-2 rounded-2xl text-[11px] font-semibold">
+                        <span>⚡ 30 секунд</span>
+                        <span class="opacity-40">•</span>
+                        <span>📱 Без приложений</span>
+                    </div>
+                </main>
+            </div>
+        </div>
+
+        <!-- СЕКЦИЯ 2: ПОЛНАЯ РАСКЛАДКА А4 ДЛЯ ПЕЧАТИ (ПЕЧАТАЕТСЯ ВСЕГДА) -->
+        <div id="print-sheets-container" class="max-w-4xl mx-auto space-y-8 print:space-y-0">
+            {% for pair in tables_range|batch(2) %}
+            <div class="print-sheet grid grid-cols-1 md:grid-cols-2 gap-8 print:gap-6">
+                {% for table in pair %}
+                <div class="bulk-card tent-card rounded-[32px] overflow-hidden shadow-xl flex flex-col text-center relative group">
+                    
+                    <!-- Индикатор линии разреза для типографии -->
+                    <div class="no-print absolute top-2 right-2 text-[10px] opacity-40 font-mono">
+                        Линия нарезки ✂️
+                    </div>
+
+                    <!-- Шапка с фирменным стилем -->
+                    <header class="tent-header pt-6 pb-5 px-5 relative flex flex-col items-center">
+                        <div class="tent-badge inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full text-[11px] font-bold mb-2 shadow-sm">
+                            <span>✨</span>
+                            <span>Обратная связь</span>
+                        </div>
+
+                        <h2 class="tent-title text-xl tracking-tight mb-1">
+                            {{ business.name }}
+                        </h2>
+
+                        <div class="tent-table mt-1 px-4 py-1 rounded-full text-xs uppercase tracking-wider shadow-sm">
+                            Столик №{{ table }}
+                        </div>
+
+                        <div class="tent-stars flex items-center gap-1 mt-2 text-xs">
+                            <span>★</span><span>★</span><span>★</span><span>★</span><span>★</span>
+                        </div>
+                    </header>
+
+                    <!-- Основная часть карточки с QR-кодом -->
+                    <main class="p-6 flex flex-col items-center flex-1 justify-between">
+                        <div class="tent-qr-box relative p-2.5 rounded-[22px] mb-4 shadow-sm">
                             <img 
                                 src="/api/qr/{{ business_id }}?v=2&table={{ table }}" 
                                 alt="QR-код для столика {{ table }}" 
@@ -132,35 +682,207 @@
                                 loading="lazy"
                             >
                         </div>
-                    </div>
 
-                    <div class="space-y-1 mb-4">
-                        <h3 class="text-base font-black text-slate-900 tracking-tight">
-                            Как вам у нас?
-                        </h3>
-                        <p class="text-[11px] font-medium text-slate-500 leading-snug max-w-[240px] mx-auto">
-                            Наведите камеру смартфона, чтобы поставить оценку или поделиться впечатлениями ❤️
-                        </p>
-                    </div>
+                        <div class="space-y-1 mb-3">
+                            <h3 class="tent-hook text-base font-black tracking-tight hook-target-text">
+                                Как вам у нас?
+                            </h3>
+                            <p class="tent-sub text-[11px] leading-snug max-w-[240px] mx-auto">
+                                Наведите камеру смартфона, чтобы поставить оценку или поделиться впечатлениями ❤️
+                            </p>
+                        </div>
 
-                    <div class="inline-flex items-center gap-3 px-3.5 py-1.5 rounded-xl bg-slate-50 border border-slate-100 text-slate-600 text-[10px] font-semibold">
-                        <span class="flex items-center gap-1">
-                            <svg class="w-3 h-3 text-indigo-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                            30 секунд
-                        </span>
-                        <span class="w-1 h-1 rounded-full bg-slate-300"></span>
-                        <span class="flex items-center gap-1">
-                            <svg class="w-3 h-3 text-pink-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z"></path></svg>
-                            Без приложений
-                        </span>
-                    </div>
-                </main>
+                        <!-- Плашка подарка (реактивная) -->
+                        <div class="tent-gift gift-target-badge w-full py-2 px-2.5 rounded-xl text-[11px] font-bold mb-3 shadow-sm">
+                            🎁 Покажите отзыв официанту и получите комплимент от шефа
+                        </div>
 
+                        <div class="tent-meta inline-flex items-center gap-3 px-3.5 py-1.5 rounded-xl text-[10px] font-semibold">
+                            <span>⚡ 30 секунд</span>
+                            <span class="opacity-40">•</span>
+                            <span>📱 Без приложений</span>
+                        </div>
+                    </main>
+
+                </div>
+                {% endfor %}
             </div>
             {% endfor %}
         </div>
-        {% endfor %}
+
     </div>
 
+    <!-- JAVASCRIPT: ИНТЕРАКТИВНОЕ УПРАВЛЕНИЕ СТУДИЕЙ -->
+    <script>
+        // Инициализация темы и параметров из URL или дефолтных
+        const urlParams = new URLSearchParams(window.location.search);
+        let activeTheme = urlParams.get('theme') || '{{ theme or "specialty" }}';
+        let activeHook = urlParams.get('hook') || '';
+        let activeGift = urlParams.get('gift') || '🎁 Покажите отзыв официанту и получите комплимент от шефа';
+
+        // Применяем сохраненную тему при загрузке
+        document.addEventListener('DOMContentLoaded', () => {
+            const initialThemeBtn = document.querySelector(`[data-theme-id="${activeTheme}"]`);
+            if (initialThemeBtn) {
+                setTheme(activeTheme, initialThemeBtn.querySelector('.font-bold').textContent);
+            } else {
+                setTheme('specialty', '☕ Скандинавский минимализм');
+            }
+
+            if (activeHook) {
+                const select = document.getElementById('hook-select');
+                let found = false;
+                for (let opt of select.options) {
+                    if (opt.value === activeHook) {
+                        select.value = activeHook;
+                        found = true;
+                        break;
+                    }
+                }
+                if (!found) {
+                    select.value = 'custom';
+                    document.getElementById('custom-hook-input').classList.remove('hidden');
+                    document.getElementById('custom-hook-input').value = activeHook;
+                }
+                applyHookText(activeHook);
+            }
+
+            if (urlParams.has('gift')) {
+                document.getElementById('gift-input').value = activeGift;
+                applyGiftText(activeGift);
+            }
+        });
+
+        // Смена темы оформления
+        function setTheme(themeId, themeName) {
+            activeTheme = themeId;
+            const canvas = document.getElementById('studio-canvas');
+            canvas.className = `theme-${themeId}`;
+
+            // Подсветка активной кнопки
+            document.querySelectorAll('.theme-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            const targetBtn = document.querySelector(`[data-theme-id="${themeId}"]`);
+            if (targetBtn) {
+                targetBtn.classList.add('active');
+            }
+
+            // Текст названия темы
+            document.getElementById('current-theme-name').textContent = themeName;
+            document.getElementById('form-theme-input').value = themeId;
+
+            updateUrlState();
+        }
+
+        // Обновление заголовка-крючка
+        function updateHook(val) {
+            const customInput = document.getElementById('custom-hook-input');
+            if (val === 'custom') {
+                customInput.classList.remove('hidden');
+                customInput.focus();
+                activeHook = customInput.value || 'Как вам у нас?';
+            } else {
+                customInput.classList.add('hidden');
+                activeHook = val;
+            }
+            applyHookText(activeHook);
+            updateUrlState();
+        }
+
+        function updateCustomHook(val) {
+            activeHook = val || 'Как вам у нас?';
+            applyHookText(activeHook);
+            updateUrlState();
+        }
+
+        function applyHookText(text) {
+            document.getElementById('preview-hook-text').textContent = text;
+            document.querySelectorAll('.hook-target-text').forEach(el => {
+                el.textContent = text;
+            });
+            document.getElementById('form-hook-input').value = text;
+        }
+
+        // Обновление плашки подарка
+        function updateGift(val) {
+            activeGift = val.trim();
+            applyGiftText(activeGift);
+            updateUrlState();
+        }
+
+        function applyGiftText(text) {
+            const previewBadge = document.getElementById('preview-gift-badge');
+            const targetBadges = document.querySelectorAll('.gift-target-badge');
+
+            if (text) {
+                previewBadge.classList.remove('hidden');
+                previewBadge.textContent = text;
+                targetBadges.forEach(b => {
+                    b.classList.remove('hidden');
+                    b.textContent = text;
+                });
+            } else {
+                previewBadge.classList.add('hidden');
+                targetBadges.forEach(b => {
+                    b.classList.add('hidden');
+                });
+            }
+            document.getElementById('form-gift-input').value = text;
+        }
+
+        // Быстрый выбор столов
+        function setQuickTables(count) {
+            document.getElementById('tables-input').value = count;
+            document.getElementById('tables-count-label').textContent = count + ' шт.';
+            // Отправляем форму для перегенерации сетки столов
+            document.getElementById('tables-input').form.submit();
+        }
+
+        // Переключение режимов: Превью карточки vs Полная раскладка
+        function switchView(mode) {
+            const previewSec = document.getElementById('live-preview-section');
+            const sheetsSec = document.getElementById('print-sheets-container');
+            const previewBtn = document.getElementById('view-preview-btn');
+            const sheetsBtn = document.getElementById('view-sheets-btn');
+
+            if (mode === 'preview') {
+                previewSec.classList.remove('hidden');
+                sheetsSec.classList.add('hidden');
+                previewBtn.className = "px-4 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white transition shadow-sm";
+                sheetsBtn.className = "px-4 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition";
+            } else {
+                previewSec.classList.add('hidden');
+                sheetsSec.classList.remove('hidden');
+                previewBtn.className = "px-4 py-1.5 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-300 transition";
+                sheetsBtn.className = "px-4 py-1.5 rounded-xl text-xs font-bold bg-indigo-600 text-white transition shadow-sm";
+            }
+        }
+
+        // Сохранение состояния в URL (без перезагрузки страницы)
+        function updateUrlState() {
+            const params = new URLSearchParams(window.location.search);
+            params.set('theme', activeTheme);
+            if (activeHook) params.set('hook', activeHook);
+            if (activeGift) params.set('gift', activeGift);
+            
+            const newUrl = `${window.location.pathname}?${params.toString()}`;
+            window.history.replaceState({}, '', newUrl);
+        }
+
+        // Копирование ссылки на готовый макет для дизайнера/типографии
+        function copyShareLink() {
+            navigator.clipboard.writeText(window.location.href).then(() => {
+                const btn = document.getElementById('copy-btn');
+                const orig = btn.innerHTML;
+                btn.innerHTML = '<span>✅</span> <span>Ссылка скопирована!</span>';
+                btn.classList.add('bg-emerald-600', 'text-white', 'border-emerald-500');
+                setTimeout(() => {
+                    btn.innerHTML = orig;
+                    btn.classList.remove('bg-emerald-600', 'text-white', 'border-emerald-500');
+                }, 2000);
+            });
+        }
+    </script>
 </body>
 </html>
