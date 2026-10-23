@@ -133,8 +133,10 @@ async def broadcast_feedback(business_id: str, rating: int, comment: str, contac
         )
 
         # Формируем интерактивные кнопки для мгновенной связи
+        mgr_token = get_manager_token(business_id)
+        buttons = []
+
         if contact:
-            buttons = []
             clean_contact = contact.strip()
             is_telegram = clean_contact.startswith("@") or "t.me/" in clean_contact.lower()
 
@@ -149,15 +151,17 @@ async def broadcast_feedback(business_id: str, rating: int, comment: str, contac
                 tg_username = clean_contact.replace("https://", "").replace("http://", "").replace("t.me/", "").lstrip("@").strip()
                 buttons.append([
                     {
-                        "text": f"💬 Открыть диалог в Telegram (@{tg_username})",
+                        "text": f"✈️ Написать гостю в Telegram (@{tg_username}) ↗",
                         "url": f"https://t.me/{tg_username}"
                     }
                 ])
             elif len(digits) >= 10:
-                wa_encoded_text = urllib.parse.quote(personal_reply)
+                # Компактный вежливый текст для предзаполнения в WhatsApp (гарантированно укладывается в лимит URL Telegram)
+                short_wa_text = f"Здравствуйте! Я управляющий «{business_name}». Увидел ваш отзыв, хочу лично разобраться и сгладить впечатление."
+                wa_encoded_text = urllib.parse.quote(short_wa_text)
                 buttons.append([
                     {
-                        "text": "💬 Написать клиенту в WhatsApp",
+                        "text": "💬 Написать гостю в WhatsApp ↗",
                         "url": f"https://wa.me/{digits}?text={wa_encoded_text}"
                     }
                 ])
@@ -166,13 +170,20 @@ async def broadcast_feedback(business_id: str, rating: int, comment: str, contac
                 if re.fullmatch(r"[a-zA-Z0-9_]{3,32}", tg_username):
                     buttons.append([
                         {
-                            "text": f"💬 Открыть диалог в Telegram (@{tg_username})",
+                            "text": f"✈️ Написать гостю в Telegram (@{tg_username}) ↗",
                             "url": f"https://t.me/{tg_username}"
                         }
                     ])
 
-            if buttons:
-                reply_markup = {"inline_keyboard": buttons}
+        # Кнопка открытия аналитики/дашборда заведения доступна всегда
+        buttons.append([
+            {
+                "text": "📊 Открыть дашборд заведения ↗",
+                "url": f"{BASE_URL}/dashboard/{business_id}?auth={mgr_token}"
+            }
+        ])
+
+        reply_markup = {"inline_keyboard": buttons}
 
     success_count = 0
     for cid in chat_ids:
