@@ -11,3 +11,4 @@ scratch/
 *.db-wal
 *.db-shm
 .pytest_cache/
+backups/

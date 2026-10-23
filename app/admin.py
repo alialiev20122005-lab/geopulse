@@ -446,3 +446,31 @@ async def admin_unlink_manager(request: Request, record_id: int):
         return RedirectResponse(url="/admin/login", status_code=303)
     unlink_telegram_owner_by_id(record_id)
     return RedirectResponse(url="/admin/managers?msg=Менеджер+успешно+отвязан", status_code=303)
+
+from starlette.responses import FileResponse
+from app.backup import create_database_backup, send_backup_to_telegram
+
+@router.get("/backup/download")
+async def admin_download_backup(request: Request):
+    """Скачивание актуального атомарного бэкапа базы данных SQLite."""
+    if not is_admin(request):
+        return RedirectResponse(url="/admin/login", status_code=303)
+    
+    backup_path = create_database_backup()
+    filename = os.path.basename(backup_path)
+    return FileResponse(
+        path=backup_path,
+        filename=filename,
+        media_type="application/x-sqlite3"
+    )
+
+@router.post("/backup/send-telegram")
+async def admin_send_backup_telegram(request: Request):
+    """Мгновенная отправка свежего бэкапа базы данных в Telegram администратора."""
+    if not is_admin(request):
+        return RedirectResponse(url="/admin/login", status_code=303)
+    
+    backup_path = create_database_backup()
+    ok = await send_backup_to_telegram(backup_path)
+    msg = "Резервная+копия+успешно+отправлена+в+ваш+Telegram!" if ok else "Ошибка+отправки+бэкапа+в+Telegram"
+    return RedirectResponse(url=f"/admin?msg={msg}", status_code=303)

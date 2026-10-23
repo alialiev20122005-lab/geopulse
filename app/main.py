@@ -81,10 +81,20 @@ async def lifespan(app: FastAPI):
     except Exception as e:
         logger.error(f"❌ Ошибка запуска Telegram поллинга: {e}")
 
+    # 3. Запуск фонового планировщика ночных бэкапов базы данных
+    backup_task = None
+    try:
+        from app.backup import backup_scheduler_loop
+        backup_task = asyncio.create_task(backup_scheduler_loop())
+    except Exception as e:
+        logger.error(f"❌ Ошибка запуска планировщика бэкапов: {e}")
+
     yield
 
     if polling_task:
         polling_task.cancel()
+    if backup_task:
+        backup_task.cancel()
 
 app = FastAPI(title="GeoPulse Multi-Tenant", lifespan=lifespan)
 
