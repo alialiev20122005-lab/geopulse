@@ -415,9 +415,19 @@ async def print_tent_page(
         }
     )
 
+_QR_MEMORY_CACHE = {}
+
 @app.get("/api/qr/{business_id}")
 def generate_qr(business_id: str, request: Request, table: Optional[str] = ""):
-    """Динамическая генерация эстетичного PNG QR-кода со скругленными точками."""
+    """Динамическая генерация эстетичного PNG QR-кода со скругленными точками и кэшированием в RAM."""
+    cache_key = f"{business_id.lower().strip()}:{str(table).strip()}"
+    if cache_key in _QR_MEMORY_CACHE:
+        return Response(
+            content=_QR_MEMORY_CACHE[cache_key],
+            media_type="image/png",
+            headers={"Cache-Control": "public, max-age=604800, immutable"}
+        )
+
     business = get_business(business_id)
     if not business:
         raise HTTPException(status_code=404, detail="Заведение не найдено")
@@ -456,12 +466,15 @@ def generate_qr(business_id: str, request: Request, table: Optional[str] = ""):
     )
     buf = io.BytesIO()
     img.save(buf, format="PNG")
-    buf.seek(0)
+    png_bytes = buf.getvalue()
+
+    if len(_QR_MEMORY_CACHE) < 500:
+        _QR_MEMORY_CACHE[cache_key] = png_bytes
 
     return Response(
-        content=buf.getvalue(),
+        content=png_bytes,
         media_type="image/png",
-        headers={"Cache-Control": "public, max-age=86400, stale-while-revalidate=604800"}
+        headers={"Cache-Control": "public, max-age=604800, immutable"}
     )
 
 @app.post("/api/feedback")
