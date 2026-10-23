@@ -739,10 +739,9 @@
                 <div>
                     <label class="block text-xs font-bold text-slate-300 mb-1">Заведение (ID или название) *</label>
                     <select id="payBusinessId" class="w-full bg-slate-950 border border-slate-800 rounded-xl px-3.5 py-3 text-xs text-white focus:outline-none focus:border-indigo-500">
-                        <option value="zerno">Кофейня «Зерно» (демо)</option>
-                        <option value="daikon">Кафе «Daikon» (демо)</option>
-                        <option value="picasso">Парикмахерская «Picasso»</option>
-                        <option value="katoff">Автосервис «Katoff»</option>
+                        {% for b in businesses %}
+                        <option value="{{ b.id }}">{{ b.name }}</option>
+                        {% endfor %}
                     </select>
                 </div>
 
