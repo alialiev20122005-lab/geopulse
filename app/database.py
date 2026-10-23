@@ -138,6 +138,22 @@ def init_db():
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_payments_biz ON payments(business_id, created_at DESC);")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_payments_provider ON payments(provider_payment_id);")
 
+        # Однократная миграция: полная очистка тестовых заведений, отзывов, лидов и платежей
+        cursor.execute("""
+        CREATE TABLE IF NOT EXISTS system_migrations (
+            id TEXT PRIMARY KEY,
+            applied_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        );
+        """)
+        cursor.execute("SELECT 1 FROM system_migrations WHERE id = 'purge_test_data_20261024';")
+        if not cursor.fetchone():
+            cursor.execute("DELETE FROM feedbacks;")
+            cursor.execute("DELETE FROM leads;")
+            cursor.execute("DELETE FROM payments;")
+            cursor.execute("DELETE FROM businesses WHERE id != 'zerno';")
+            cursor.execute("DELETE FROM business_owners WHERE business_id != 'zerno';")
+            cursor.execute("INSERT INTO system_migrations (id) VALUES ('purge_test_data_20261024');")
+
         conn.commit()
 
 def seed_initial_data(default_chat_id: str = ""):
