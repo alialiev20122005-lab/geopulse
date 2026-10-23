@@ -111,7 +111,7 @@
                     </div>
 
                     <button type="submit" id="submit-btn" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-4 px-4 rounded-2xl shadow-xl shadow-slate-900/10 text-sm transition active:scale-[0.98] flex items-center justify-center gap-2">
-                        <span>Отправить напрямую управляющему</span>
+                        <span>Отправить</span>
                         <span>➔</span>
                     </button>
                     <p class="text-[11px] text-center text-slate-400 font-medium">Сообщение поступит в личный Telegram руководства за 3 секунды</p>
@@ -254,7 +254,7 @@
                     errBox.textContent = 'Ошибка при отправке. Пожалуйста, проверьте введённые данные и попробуйте снова.';
                     errBox.classList.remove('hidden');
                     submitBtn.disabled = false;
-                    submitBtn.textContent = "Отправить напрямую управляющему";
+                    submitBtn.textContent = "Отправить";
                 }
             } catch (err) {
                 console.error(err);
@@ -262,7 +262,7 @@
                 errBox.textContent = 'Не удалось связаться с сервером. Пожалуйста, проверьте подключение к интернету.';
                 errBox.classList.remove('hidden');
                 submitBtn.disabled = false;
-                submitBtn.textContent = "Отправить напрямую управляющему";
+                submitBtn.textContent = "Отправить";
             }
         }
     </script>
