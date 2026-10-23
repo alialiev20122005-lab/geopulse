@@ -5,26 +5,38 @@ import os
 
 # В Amvera постоянное хранилище подключается в папку /data.
 # Если папка существует, база сохраняется навсегда между перезапусками контейнера.
-if os.path.exists("/data") and os.path.isdir("/data"):
-    DB_PATH = "/data/geopulse.db"
-    # Если в постоянном хранилище еще нет базы, копируем стартовую базу с демо-заведениями
-    repo_db = os.path.join(os.path.dirname(os.path.dirname(__file__)), "geopulse.db")
-    if not os.path.exists(DB_PATH) and os.path.exists(repo_db):
+import logging
+logger = logging.getLogger("GeoPulseDB")
+
+def get_db_path() -> str:
+    # Проверяем, есть ли папка /data и доступна ли она для записи в Amvera
+    if os.path.exists("/data") and os.path.isdir("/data"):
         try:
-            import shutil
-            shutil.copy2(repo_db, DB_PATH)
-        except Exception:
-            pass
-else:
-    DB_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "geopulse.db")
+            test_file = "/data/.perm_test"
+            with open(test_file, "w") as f:
+                f.write("ok")
+            os.remove(test_file)
+            db_path = "/data/geopulse.db"
+            repo_db = os.path.join(os.path.dirname(os.path.dirname(__file__)), "geopulse.db")
+            if not os.path.exists(db_path) and os.path.exists(repo_db):
+                import shutil
+                shutil.copy2(repo_db, db_path)
+            return db_path
+        except Exception as e:
+            logger.warning(f"Папка /data недоступна для записи ({e}), переключаемся на локальную базу.")
+    
+    return os.path.join(os.path.dirname(os.path.dirname(__file__)), "geopulse.db")
+
+DB_PATH = get_db_path()
 
 def get_connection():
     conn = sqlite3.connect(DB_PATH, timeout=30.0)
     conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA journal_mode = WAL;")
-    conn.execute("PRAGMA synchronous = NORMAL;")
-    conn.execute("PRAGMA foreign_keys = ON;")
-    conn.execute("PRAGMA busy_timeout = 5000;")
+    try:
+        conn.execute("PRAGMA foreign_keys = ON;")
+        conn.execute("PRAGMA busy_timeout = 5000;")
+    except Exception:
+        pass
     return conn
 
 def init_db():
@@ -32,6 +44,12 @@ def init_db():
     with get_connection() as conn:
         cursor = conn.cursor()
         
+        try:
+            cursor.execute("PRAGMA journal_mode = WAL;")
+            cursor.execute("PRAGMA synchronous = NORMAL;")
+        except Exception as e:
+            logger.warning(f"Не удалось включить WAL режим: {e}")
+
         # 1. Таблица заведений
         cursor.execute("""
         CREATE TABLE IF NOT EXISTS businesses (

@@ -66,15 +66,25 @@ logger = logging.getLogger("GeoPulse")
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # 1. Инициализация БД и сидинг демо-данных
-    init_db()
-    seed_initial_data(TELEGRAM_CHAT_ID)
-    logger.info("✅ База данных SQLite успешно инициализирована.")
+    # 1. Инициализация БД и сидинг демо-данных с защитой от сбоев
+    try:
+        init_db()
+        seed_initial_data(TELEGRAM_CHAT_ID)
+        logger.info("✅ База данных SQLite успешно инициализирована.")
+    except Exception as e:
+        logger.error(f"❌ Ошибка инициализации БД: {e}", exc_info=True)
 
     # 2. Запуск фонового поллинга Telegram для приема /start biz_<id>
-    polling_task = asyncio.create_task(telegram_polling_loop())
+    polling_task = None
+    try:
+        polling_task = asyncio.create_task(telegram_polling_loop())
+    except Exception as e:
+        logger.error(f"❌ Ошибка запуска Telegram поллинга: {e}")
+
     yield
-    polling_task.cancel()
+
+    if polling_task:
+        polling_task.cancel()
 
 app = FastAPI(title="GeoPulse Multi-Tenant", lifespan=lifespan)
 
