@@ -354,7 +354,8 @@ async def print_bulk_tents_page(
     tables: int = 10,
     theme: str = "specialty",
     hook: str = "",
-    gift: str = ""
+    gift: str = "",
+    format: str = "holder"
 ):
     """Интерактивная дизайн-студия и массовая печать тейбл-тентов (раскладка А4)."""
     business = get_business(business_id)
@@ -372,7 +373,8 @@ async def print_bulk_tents_page(
             "tables_range": list(range(1, count + 1)),
             "theme": theme,
             "hook": hook,
-            "gift": gift
+            "gift": gift,
+            "format": format
         }
     )
 
@@ -384,7 +386,8 @@ async def print_tent_page(
     tables: int = 10,
     theme: str = "specialty",
     hook: str = "",
-    gift: str = ""
+    gift: str = "",
+    format: str = "holder"
 ):
     """Интерактивная дизайн-студия тейбл-тентов с выбором из 12 стилей."""
     business = get_business(business_id)
@@ -403,7 +406,8 @@ async def print_tent_page(
             "table_number": table or "1",
             "theme": theme,
             "hook": hook,
-            "gift": gift
+            "gift": gift,
+            "format": format
         }
     )
 
