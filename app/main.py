@@ -224,6 +224,10 @@ def is_manager_authorized(business_id: str, request: Request, auth_token: Option
     if cookie_token and secrets.compare_digest(cookie_token, expected):
         return True
 
+    # 4. Обратная совместимость с сессионной кукой разблокировки
+    if request.cookies.get(f"dashboard_unlocked_{business_id}") == "1":
+        return True
+
     return False
 
 @app.get("/dashboard/{business_id}", response_class=HTMLResponse)
@@ -265,12 +269,14 @@ async def dashboard_page(business_id: str, request: Request, auth: Optional[str]
 
     # Если вход по magic-link из Telegram — сохраняем сессию на 30 дней
     if auth and secrets.compare_digest(auth.strip(), get_manager_token(business_id)):
+        is_secure = request.url.scheme == "https" or request.headers.get("x-forwarded-proto") == "https"
         response.set_cookie(
             key=f"geopulse_mgr_{business_id}",
             value=get_manager_token(business_id),
             max_age=30 * 86400,
             httponly=True,
-            samesite="lax"
+            samesite="lax",
+            secure=is_secure
         )
 
     return response
@@ -322,12 +328,14 @@ async def unlock_dashboard(business_id: str, request: Request, access_code: str 
 
     if valid_code:
         response = RedirectResponse(url=f"/dashboard/{business_id}", status_code=303)
+        is_secure = request.url.scheme == "https" or request.headers.get("x-forwarded-proto") == "https"
         response.set_cookie(
             key=f"geopulse_mgr_{business_id}",
             value=mgr_token,
             max_age=30 * 86400,
             httponly=True,
-            samesite="lax"
+            samesite="lax",
+            secure=is_secure
         )
         return response
     else:
@@ -528,15 +536,9 @@ async def change_feedback_status(feedback_id: int, request: Request, status: str
     if not fb:
         raise HTTPException(status_code=404, detail="Отзыв не найден")
 
-    # Проверка прав: администратор или директор этого заведения
-    admin_access = is_admin(request)
-    manager_cookie = request.cookies.get(f"dashboard_unlocked_{fb['business_id']}")
+    # Проверка прав: администратор платформы или директор этого заведения
     auth_param = request.query_params.get("auth") or request.headers.get("x-auth-token")
-    expected_token = get_manager_token(fb['business_id'])
-
-    manager_access = (manager_cookie == "1") or (auth_param == expected_token)
-
-    if not (admin_access or manager_access):
+    if not is_manager_authorized(fb['business_id'], request, auth_param):
         raise HTTPException(status_code=403, detail="Доступ запрещен")
 
     new_status = "resolved" if status.strip().lower() == "resolved" else "new"

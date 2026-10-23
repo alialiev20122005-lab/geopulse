@@ -580,11 +580,11 @@ def mark_payment_succeeded(provider_payment_id: str, days: int = 30) -> bool:
         WHERE provider_payment_id = ?;
         """, (provider_payment_id.strip(),))
 
-        cursor.execute(f"""
+        cursor.execute("""
         UPDATE businesses 
-        SET status = 'active', plan = ?, paid_until = datetime(CURRENT_TIMESTAMP, '+{days} days')
+        SET status = 'active', plan = ?, paid_until = datetime(CURRENT_TIMESTAMP, '+' || ? || ' days')
         WHERE id = ?;
-        """, (plan, business_id.lower().strip()))
+        """, (plan, int(days), business_id.lower().strip()))
 
         conn.commit()
         return True
@@ -675,22 +675,28 @@ def get_daily_digest(business_id: Optional[str] = None) -> Dict[str, Any]:
     """Сводка ключевых показателей за последние 24 часа для Telegram-дайджеста."""
     with get_connection() as conn:
         cursor = conn.cursor()
-        base_filter = "datetime(f.created_at) >= datetime('now', '-1 day')"
-        params = []
         if business_id:
-            base_filter += " AND f.business_id = ?"
-            params.append(business_id.lower().strip())
-
-        cursor.execute(f"""
-        SELECT 
-            COUNT(*) as total_24h,
-            AVG(f.rating) as avg_rating_24h,
-            SUM(CASE WHEN f.rating <= 3 THEN 1 ELSE 0 END) as negative_24h,
-            SUM(CASE WHEN f.rating >= 4 THEN 1 ELSE 0 END) as positive_24h,
-            SUM(CASE WHEN f.rating <= 3 AND f.status != 'resolved' THEN 1 ELSE 0 END) as unresolved_24h
-        FROM feedbacks f
-        WHERE {base_filter};
-        """, params)
+            cursor.execute("""
+            SELECT 
+                COUNT(*) as total_24h,
+                AVG(f.rating) as avg_rating_24h,
+                SUM(CASE WHEN f.rating <= 3 THEN 1 ELSE 0 END) as negative_24h,
+                SUM(CASE WHEN f.rating >= 4 THEN 1 ELSE 0 END) as positive_24h,
+                SUM(CASE WHEN f.rating <= 3 AND f.status != 'resolved' THEN 1 ELSE 0 END) as unresolved_24h
+            FROM feedbacks f
+            WHERE datetime(f.created_at) >= datetime('now', '-1 day') AND f.business_id = ?;
+            """, (business_id.lower().strip(),))
+        else:
+            cursor.execute("""
+            SELECT 
+                COUNT(*) as total_24h,
+                AVG(f.rating) as avg_rating_24h,
+                SUM(CASE WHEN f.rating <= 3 THEN 1 ELSE 0 END) as negative_24h,
+                SUM(CASE WHEN f.rating >= 4 THEN 1 ELSE 0 END) as positive_24h,
+                SUM(CASE WHEN f.rating <= 3 AND f.status != 'resolved' THEN 1 ELSE 0 END) as unresolved_24h
+            FROM feedbacks f
+            WHERE datetime(f.created_at) >= datetime('now', '-1 day');
+            """)
         fb_stats = dict(cursor.fetchone())
 
         cursor.execute("""

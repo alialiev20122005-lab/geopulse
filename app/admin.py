@@ -84,12 +84,14 @@ async def handle_login(
     if valid_user and valid_pass:
         response = RedirectResponse(url="/admin", status_code=303)
         # Устанавливаем защищенную куку сессии на 7 дней
+        is_secure = request.url.scheme == "https" or request.headers.get("x-forwarded-proto") == "https"
         response.set_cookie(
             key=COOKIE_NAME,
             value=get_auth_token(),
             max_age=7 * 24 * 3600,
             httponly=True,
-            samesite="lax"
+            samesite="lax",
+            secure=is_secure
         )
         logger.info("🔑 Администратор успешно вошел в панель управления.")
         return response
