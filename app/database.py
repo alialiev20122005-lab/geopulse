@@ -147,12 +147,17 @@ def init_db():
         """)
         cursor.execute("SELECT 1 FROM system_migrations WHERE id = 'purge_test_data_20261024';")
         if not cursor.fetchone():
-            cursor.execute("DELETE FROM feedbacks;")
-            cursor.execute("DELETE FROM leads;")
-            cursor.execute("DELETE FROM payments;")
-            cursor.execute("DELETE FROM businesses WHERE id != 'zerno';")
-            cursor.execute("DELETE FROM business_owners WHERE business_id != 'zerno';")
-            cursor.execute("INSERT INTO system_migrations (id) VALUES ('purge_test_data_20261024');")
+            try:
+                cursor.execute("PRAGMA foreign_keys = OFF;")
+                cursor.execute("DELETE FROM feedbacks;")
+                cursor.execute("DELETE FROM leads;")
+                cursor.execute("DELETE FROM payments;")
+                cursor.execute("DELETE FROM business_owners WHERE business_id != 'zerno';")
+                cursor.execute("DELETE FROM businesses WHERE id != 'zerno';")
+                cursor.execute("PRAGMA foreign_keys = ON;")
+                cursor.execute("INSERT INTO system_migrations (id) VALUES ('purge_test_data_20261024');")
+            except Exception as e:
+                logger.error(f"Migration error: {e}")
 
         conn.commit()
 

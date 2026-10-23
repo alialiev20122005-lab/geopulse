@@ -81,14 +81,6 @@ from fastapi.middleware.gzip import GZipMiddleware
 app = FastAPI(title="GeoPulse Multi-Tenant", lifespan=lifespan)
 app.add_middleware(GZipMiddleware, minimum_size=500)
 
-@app.middleware("http")
-async def add_performance_cache_headers(request: Request, call_next):
-    response = await call_next(request)
-    path = request.url.path
-    if path.startswith("/static/") or path == "/favicon.ico":
-        response.headers["Cache-Control"] = "public, max-age=86400, stale-while-revalidate=3600"
-    return response
-
 templates = Jinja2Templates(directory="app/templates")
 
 # Подключение статических ресурсов и фавиконки
