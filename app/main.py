@@ -76,10 +76,7 @@ async def lifespan(app: FastAPI):
     yield
     polling_task.cancel()
 
-from fastapi.middleware.gzip import GZipMiddleware
-
 app = FastAPI(title="GeoPulse Multi-Tenant", lifespan=lifespan)
-app.add_middleware(GZipMiddleware, minimum_size=500)
 
 templates = Jinja2Templates(directory="app/templates")
 
@@ -425,7 +422,7 @@ def generate_qr(business_id: str, request: Request, table: Optional[str] = ""):
         return Response(
             content=_QR_MEMORY_CACHE[cache_key],
             media_type="image/png",
-            headers={"Cache-Control": "public, max-age=604800, immutable"}
+            headers={"Cache-Control": "public, max-age=86400, stale-while-revalidate=604800"}
         )
 
     business = get_business(business_id)
@@ -474,7 +471,7 @@ def generate_qr(business_id: str, request: Request, table: Optional[str] = ""):
     return Response(
         content=png_bytes,
         media_type="image/png",
-        headers={"Cache-Control": "public, max-age=604800, immutable"}
+        headers={"Cache-Control": "public, max-age=86400, stale-while-revalidate=604800"}
     )
 
 @app.post("/api/feedback")
