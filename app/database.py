@@ -200,11 +200,31 @@ def seed_initial_data(default_chat_id: str = ""):
         );
         """)
 
+        cursor.execute("""
+        INSERT OR IGNORE INTO businesses (id, name, category, address, yandex_maps_url, two_gis_url, welcome_text, negative_cta, positive_cta, status)
+        VALUES (
+            'sahara',
+            'Кафе «Сахара»',
+            'Кафе / Ресторан',
+            'Орджоникидзе 62, село Комсомольское',
+            'https://yandex.ru/maps',
+            '',
+            'Поделитесь впечатлениями о визите в кафе «Сахара». Ваше мнение помогает нам становиться лучше!',
+            'Нам очень жаль! Напишите управляющему, чтобы мы могли сразу исправить ситуацию:',
+            'Спасибо за вашу оценку! Пожалуйста, поддержите нас отзывом на Яндекс.Картах ❤️',
+            'active'
+        );
+        """)
+
         target_chat = (default_chat_id or "8919849369").strip()
         if target_chat:
             cursor.execute("""
             INSERT OR IGNORE INTO business_owners (business_id, telegram_chat_id)
             VALUES ('zerno', ?);
+            """, (target_chat,))
+            cursor.execute("""
+            INSERT OR IGNORE INTO business_owners (business_id, telegram_chat_id)
+            VALUES ('sahara', ?);
             """, (target_chat,))
 
         conn.commit()

@@ -1,3 +1,4 @@
+import os
 import asyncio
 import hashlib
 import html
@@ -235,6 +236,12 @@ async def telegram_polling_loop():
         logger.info("Telegram Bot Token не задан. Фоновый поллинг отключен.")
         return
 
+    # Защита от конфликта polling со старым сервером Render:
+    # Render автоматически задает переменную окружения RENDER=true
+    if os.getenv("RENDER") or os.getenv("RENDER_SERVICE_ID") or "onrender.com" in os.getenv("BASE_URL", ""):
+        logger.warning("Обнаружен запуск на устаревшем сервере Render! Фоновый поллинг Telegram отключен в пользу Amvera.")
+        return
+
     logger.info("🤖 Запущен фоновый обработчик Telegram-бота...")
     offset = 0
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getUpdates"
@@ -318,7 +325,7 @@ async def telegram_polling_loop():
                                     help_msg = (
                                         f"❌ <b>Заведение по запросу «{html.escape(raw_param)}» не найдено в базе.</b>\n\n"
                                         f"<b>Возможные причины:</b>\n"
-                                        f"1. Заведение создано на локальном сервере, а бот подключен к облачной базе Render.\n"
+                                        f"1. Заведение было удалено или еще не добавлено в систему.\n"
                                         f"2. Опечатка в ID или названии.\n\n"
                                         f"<b>Доступные заведения:</b>\n"
                                         f"{list_str}\n\n"
