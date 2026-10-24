@@ -12,3 +12,5 @@ scratch/
 *.db-shm
 .pytest_cache/
 backups/
+
+CREDENTIALS_SAFE.md
