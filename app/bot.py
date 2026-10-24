@@ -48,12 +48,23 @@ async def send_message(chat_id: str, text: str, reply_markup: Optional[dict] = N
                 return True
             else:
                 logger.error(f"❌ Telegram API error {resp.status_code} for user {chat_id}: {resp.text}")
-                # Если сбой в HTML-тегах, пробуем отправить без parse_mode
-                if resp.status_code == 400 and ("can't parse entities" in resp.text or "entity" in resp.text):
-                    logger.warning("Повторная попытка отправки без разметки HTML...")
-                    payload.pop("parse_mode", None)
-                    retry_resp = await client.post(url, json=payload)
-                    return retry_resp.status_code == 200
+                # Если сбой 400 (невалидный URL кнопки, ошибка HTML-сущностей или длина текста)
+                if resp.status_code == 400:
+                    logger.warning("Повторная попытка отправки Telegram в безопасном режиме...")
+                    safe_payload = {
+                        "chat_id": chat_id,
+                        "text": text[:3900],
+                        "parse_mode": "HTML"
+                    }
+                    retry_resp = await client.post(url, json=safe_payload)
+                    if retry_resp.status_code == 200:
+                        return True
+                    # Если и с HTML сбой — отправляем чистый текст без тегов
+                    safe_payload.pop("parse_mode", None)
+                    import re as _re
+                    safe_payload["text"] = _re.sub(r"<[^>]+>", "", text)[:3900]
+                    retry_resp2 = await client.post(url, json=safe_payload)
+                    return retry_resp2.status_code == 200
                 return False
     except Exception as e:
         logger.error(f"❌ Ошибка отправки сообщения пользователю {chat_id}: {e}")
@@ -150,12 +161,13 @@ async def broadcast_feedback(business_id: str, rating: int, comment: str, contac
 
             if is_telegram:
                 tg_username = clean_contact.replace("https://", "").replace("http://", "").replace("t.me/", "").lstrip("@").strip()
-                buttons.append([
-                    {
-                        "text": f"✈️ Написать гостю в Telegram (@{tg_username}) ↗",
-                        "url": f"https://t.me/{tg_username}"
-                    }
-                ])
+                if re.fullmatch(r"[a-zA-Z0-9_]{3,32}", tg_username):
+                    buttons.append([
+                        {
+                            "text": f"✈️ Написать гостю в Telegram (@{tg_username}) ↗",
+                            "url": f"https://t.me/{tg_username}"
+                        }
+                    ])
             elif len(digits) >= 10:
                 # Компактный вежливый текст для предзаполнения в WhatsApp (гарантированно укладывается в лимит URL Telegram)
                 short_wa_text = f"Здравствуйте! Я управляющий «{business_name}». Увидел ваш отзыв, хочу лично разобраться и сгладить впечатление."

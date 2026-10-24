@@ -978,10 +978,10 @@
     <script>
         // Инициализация темы и параметров из URL или дефолтных
         const urlParams = new URLSearchParams(window.location.search);
-        let activeTheme = urlParams.get('theme') || '{{ theme or "specialty" }}';
-        let activeHook = urlParams.get('hook') || '';
-        let activeGift = urlParams.get('gift') || '🎁 Покажите отзыв официанту и получите комплимент от шефа';
-        let activeFormat = urlParams.get('format') || '{{ format or "holder" }}';
+        let activeTheme = urlParams.get('theme') || {{ (theme or 'specialty')|tojson }};
+        let activeHook = urlParams.get('hook') || {{ (hook or '')|tojson }};
+        let activeGift = urlParams.get('gift') || {{ (gift or '🎁 Покажите отзыв официанту и получите комплимент от шефа')|tojson }};
+        let activeFormat = urlParams.get('format') || {{ (format or 'holder')|tojson }};
         let tentFlipped = urlParams.get('flip') !== '0';
 
         // Применяем сохраненную тему при загрузке

@@ -110,6 +110,21 @@ async def favicon_endpoint():
 from app.admin import router as admin_router
 app.include_router(admin_router)
 
+from fastapi.responses import JSONResponse
+
+@app.exception_handler(404)
+async def custom_404_handler(request: Request, exc: HTTPException):
+    """Красивая брендированная страница 404 для браузеров и JSON для API."""
+    detail = getattr(exc, "detail", "Страница не найдена")
+    if request.url.path.startswith("/api/") or "application/json" in request.headers.get("accept", ""):
+        return JSONResponse(status_code=404, content={"detail": detail})
+    return templates.TemplateResponse(
+        request=request,
+        name="404.html",
+        context={"detail": detail},
+        status_code=404
+    )
+
 import html
 import re
 from pydantic import BaseModel, Field

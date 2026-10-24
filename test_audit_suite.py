@@ -5,7 +5,7 @@ from app.main import app
 from app.config import ADMIN_USERNAME, ADMIN_PASSWORD
 import app.database as db
 
-async def run_tests():
+async def _execute_all():
     print("=== STARTING GEOPULSE AUDIT VERIFICATION SUITE ===")
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
@@ -54,10 +54,11 @@ async def run_tests():
         assert "Столик №3" in resp.text
         print("  -> Review page rendered properly with table context!")
 
-        # Non-existent business -> 404
+        # Non-existent business -> 404 with custom branded template
         resp = await client.get("/r/non_existent_business_xyz")
         assert resp.status_code == 404
-        print("  -> Non-existent business correctly returns 404 Not Found")
+        assert "Страница не найдена" in resp.text
+        print("  -> Non-existent business correctly returns branded 404 HTML!")
 
         # 5. Security & Boundary Validations on /api/feedback
         print("\n[TEST 5] Testing Feedback Payload validation and XSS containment...")
@@ -342,6 +343,26 @@ async def run_tests():
         print("  -> /api/digest endpoint returned 200 OK with valid metrics!")
 
     print("\n=== ALL AUDIT & REGRESSION TESTS PASSED (100% SUCCESS) ===")
+
+async def run_tests():
+    from unittest.mock import patch, AsyncMock
+    with patch("app.bot.send_message", new_callable=AsyncMock) as mock_send, \
+         patch("app.main.send_message", new_callable=AsyncMock) as mock_main_send, \
+         patch("app.backup.send_backup_to_telegram", new_callable=AsyncMock) as mock_backup_send:
+        mock_main_send.return_value = True
+        mock_send.return_value = True
+        mock_backup_send.return_value = True
+        try:
+            await _execute_all()
+        finally:
+            print("\n[TEARDOWN] Purging test feedbacks, leads, payments and restoring state...")
+            with db.get_connection() as c:
+                c.execute("DELETE FROM feedbacks WHERE comment LIKE '%XSS%' OR comment = 'Отличный сервис!'")
+                c.execute("DELETE FROM leads WHERE phone = '+7 (999) 111-22-33' OR name = 'Иван Тест'")
+                c.execute("DELETE FROM payments WHERE provider_payment_id LIKE 'test_%'")
+                c.execute("UPDATE businesses SET status = 'active' WHERE id IN ('zerno', 'sahara')")
+                c.commit()
+            print("  -> Test environment cleanly restored!")
 
 if __name__ == "__main__":
     asyncio.run(run_tests())

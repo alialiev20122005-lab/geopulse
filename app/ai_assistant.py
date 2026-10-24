@@ -117,13 +117,11 @@ async def _call_llm(business_name: str, category: str, rating: int, comment: str
         "3. Выведи ТОЛЬКО два готовых текста, разделенных строкой ===SPLIT===."
     )
 
-    # Надежные модели без утечки рассуждений (Instruction-tuned)
+    # Актуальные проверенные модели OpenRouter
     reliable_models = [
-        "meta-llama/llama-3.3-70b-instruct:free",
-        "meta-llama/llama-3.1-8b-instruct:free",
-        "mistralai/mistral-7b-instruct:free",
-        "google/gemma-2-9b-it:free",
-        "qwen/qwen-2.5-72b-instruct:free"
+        "google/gemma-4-26b-a4b-it:free",
+        "google/gemma-4-31b-it:free",
+        "nvidia/nemotron-3.5-lightning:free"
     ]
 
     if OPENROUTER_API_KEY:
@@ -145,19 +143,21 @@ async def _call_llm(business_name: str, category: str, rating: int, comment: str
                 "max_tokens": 700
             }
             try:
-                async with httpx.AsyncClient(timeout=4.5) as client:
+                async with httpx.AsyncClient(timeout=2.0) as client:
                     resp = await client.post(url, headers=headers, json=payload)
                     if resp.status_code == 200:
                         data = resp.json()
-                        msg = data["choices"][0]["message"]
-                        # Берем ТОЛЬКО чистый content, никогда reasoning!
+                        msg = data.get("choices", [{}])[0].get("message", {})
                         content = msg.get("content")
                         if content:
                             cleaned = sanitize_llm_response(content)
                             if cleaned:
                                 return cleaned
+                    elif resp.status_code in (401, 402, 403, 404, 429):
+                        logger.warning(f"OpenRouter status {resp.status_code} for {model}, fast fallback to heuristics.")
+                        break
             except Exception:
-                continue
+                break
 
     return None
 

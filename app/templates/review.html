@@ -198,7 +198,7 @@
 
     <script>
         let currentRating = 0;
-        const businessId = "{{ business_id }}";
+        const businessId = {{ business_id|tojson }};
 
         const labels = {
             1: "Очень плохо 😡",
@@ -243,7 +243,7 @@
                         rating: rating,
                         comment: 'Гость поставил высокую оценку и перенаправлен на карты',
                         contact: '',
-                        table_number: '{{ table_number }}'
+                        table_number: {{ (table_number or '')|tojson }}
                     })
                 }).catch(function(err) {
                     console.error('Feedback recording error:', err);
@@ -298,7 +298,7 @@
                 rating: currentRating,
                 comment: finalComment,
                 contact: document.getElementById('contact').value,
-                table_number: "{{ table_number }}"
+                table_number: {{ (table_number or "")|tojson }}
             };
 
             try {
