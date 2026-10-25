@@ -360,6 +360,14 @@ def get_recent_leads(limit: int = 20) -> List[Dict[str, Any]]:
         cursor.execute("SELECT * FROM leads ORDER BY created_at DESC LIMIT ?;", (limit,))
         return [dict(r) for r in cursor.fetchall()]
 
+def get_lead_by_id(lead_id: int) -> Optional[Dict[str, Any]]:
+    """Получение информации о заявке по ее ID."""
+    with get_connection() as conn:
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM leads WHERE id = ?;", (lead_id,))
+        row = cursor.fetchone()
+        return dict(row) if row else None
+
 # --- Административные функции платформы ---
 
 def get_global_stats() -> Dict[str, Any]:

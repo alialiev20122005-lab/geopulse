@@ -178,7 +178,7 @@
                     <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
                 </div>
                 <h3 class="text-xl font-black text-slate-900 mb-2">Сообщение получено</h3>
-                <p class="text-xs font-medium text-slate-500 leading-relaxed max-w-xs mx-auto">
+                <p id="sent-message-text" class="text-xs font-medium text-slate-500 leading-relaxed max-w-xs mx-auto">
                     Спасибо за честность! Управляющий уже получил ваше обращение и свяжется с вами в течение нескольких минут, чтобы загладить вину ❤️
                 </p>
             </div>
@@ -309,6 +309,16 @@
                 });
 
                 if (response.ok) {
+                    const sentMsgEl = document.getElementById('sent-message-text');
+                    if (sentMsgEl) {
+                        if (contact && contact.trim().length > 0) {
+                            sentMsgEl.textContent = 'Спасибо за честность! Управляющий уже получил ваше обращение и свяжется с вами в течение нескольких минут, чтобы загладить вину ❤️';
+                        } else if (tableNumber && tableNumber.trim().length > 0) {
+                            sentMsgEl.textContent = 'Спасибо за сигнал! Управляющий уже в курсе ситуации по столику №' + tableNumber.trim() + ' и лично примет меры.';
+                        } else {
+                            sentMsgEl.textContent = 'Спасибо за честность! Ваше обращение передано руководству заведения для немедленного исправления ситуации.';
+                        }
+                    }
                     document.getElementById('step-rating').classList.add('hidden');
                     document.getElementById('branch-negative').classList.add('hidden');
                     document.getElementById('branch-sent').classList.remove('hidden');

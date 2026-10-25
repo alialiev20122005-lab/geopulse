@@ -19,23 +19,12 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 
-# In-memory Rate Limiter для защиты от флуда и спама
-class InMemoryRateLimiter:
-    def __init__(self, requests_per_minute: int = 30):
-        self.rpm = requests_per_minute
-        self.history = defaultdict(list)
-
-    def check(self, client_ip: str) -> bool:
-        now = time.time()
-        window_start = now - 60
-        self.history[client_ip] = [t for t in self.history[client_ip] if t > window_start]
-        if len(self.history[client_ip]) >= self.rpm:
-            return False
-        self.history[client_ip].append(now)
-        return True
-
-feedback_rate_limiter = InMemoryRateLimiter(requests_per_minute=20)
-pilot_rate_limiter = InMemoryRateLimiter(requests_per_minute=10)
+from app.rate_limiter import (
+    InMemoryRateLimiter,
+    feedback_rate_limiter,
+    pilot_rate_limiter,
+    admin_login_rate_limiter
+)
 
 from app.config import TELEGRAM_BOT_USERNAME, TELEGRAM_CHAT_ID, ADMIN_PASSWORD, SESSION_SECRET, PLANS, FOUNDER_PHONE
 from app.database import (
@@ -279,6 +268,17 @@ async def dashboard_page(business_id: str, request: Request, auth: Optional[str]
     owners = get_business_chat_ids(business_id)
     telegram_deep_link = f"https://t.me/{TELEGRAM_BOT_USERNAME}?start=biz_{business_id}"
 
+    # Расчет оставшихся дней бесплатного пилота
+    is_pilot = business.get("status") == "pilot"
+    pilot_days_left = 14
+    if is_pilot and business.get("created_at"):
+        try:
+            created_dt = datetime.strptime(str(business["created_at"])[:19], "%Y-%m-%d %H:%M:%S")
+            elapsed_days = (datetime.now() - created_dt).days
+            pilot_days_left = max(0, 14 - elapsed_days)
+        except Exception:
+            pilot_days_left = 14
+
     response = templates.TemplateResponse(
         request=request,
         name="dashboard.html",
@@ -288,7 +288,9 @@ async def dashboard_page(business_id: str, request: Request, auth: Optional[str]
             "feedbacks": stats_info["feedbacks"],
             "breakdown": breakdown,
             "owner_count": len(owners),
-            "telegram_deep_link": telegram_deep_link
+            "telegram_deep_link": telegram_deep_link,
+            "is_pilot": is_pilot,
+            "pilot_days_left": pilot_days_left
         }
     )
 
@@ -549,7 +551,8 @@ async def receive_feedback(payload: FeedbackPayload, request: Request, backgroun
         rating=payload.rating,
         comment=payload.comment,
         contact=payload.contact,
-        table_number=payload.table_number or ""
+        table_number=payload.table_number or "",
+        feedback_id=feedback_id
     )
 
     return {"status": "ok", "feedback_id": feedback_id, "sent_to_telegram_count": 1}

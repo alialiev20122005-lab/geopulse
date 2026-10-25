@@ -23,59 +23,6 @@
     <title>GeoPulse — Защита рейтинга на Яндекс.Картах и 2ГИС | Умный перехват негатива</title>
     <link rel="stylesheet" href="/static/css/styles.min.css">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        function openPayModal(planId, planName, price) {
-            document.getElementById('modalPlanId').value = planId;
-            document.getElementById('modalPlanTitle').innerText = planName;
-            document.getElementById('modalPlanPrice').innerText = 'Сумма к оплате: ' + price.toLocaleString('ru-RU') + ' ₽ / 30 дней';
-            document.getElementById('payModal').classList.remove('hidden');
-        }
-
-        function closePayModal() {
-            document.getElementById('payModal').classList.add('hidden');
-        }
-
-        async function submitOnlinePay(e) {
-            e.preventDefault();
-            const btn = document.getElementById('payModalSubmitBtn');
-            const statusDiv = document.getElementById('payModalStatus');
-            btn.disabled = true;
-            btn.innerText = 'Создаем счет...';
-
-            const payload = {
-                business_id: document.getElementById('payBusinessId').value,
-                plan_id: document.getElementById('modalPlanId').value,
-                phone: document.getElementById('payPhone').value,
-                email: document.getElementById('payEmail').value
-            };
-
-            try {
-                const response = await fetch('/api/payments/create', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(payload)
-                });
-                const data = await response.json();
-                if (response.ok && data.payment_url) {
-                    window.location.href = data.payment_url;
-                } else {
-                    statusDiv.className = 'p-3 rounded-xl text-xs font-semibold text-center bg-rose-500/10 text-rose-400 border border-rose-500/20';
-                    statusDiv.innerText = data.detail || 'Не удалось сформировать счет. Попробуйте еще раз.';
-                    statusDiv.classList.remove('hidden');
-                    btn.disabled = false;
-                    btn.innerText = 'Перейти к защищенной оплате ➔';
-                }
-            } catch (err) {
-                console.error(err);
-                statusDiv.className = 'p-3 rounded-xl text-xs font-semibold text-center bg-rose-500/10 text-rose-400 border border-rose-500/20';
-                statusDiv.innerText = 'Ошибка связи с сервером платежей.';
-                statusDiv.classList.remove('hidden');
-                btn.disabled = false;
-                btn.innerText = 'Перейти к защищенной оплате ➔';
-            }
-        }
-
-    </script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">

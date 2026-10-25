@@ -72,6 +72,11 @@
                     <td class="py-4 px-4 text-right">
                         {% set raw_digits = l.phone | replace('+', '') | replace(' ', '') | replace('-', '') | replace('(', '') | replace(')', '') %}
                         <div class="flex items-center justify-end gap-2">
+                            <form action="/admin/leads/{{ l.id }}/convert" method="POST" onsubmit="return confirm('Создать заведение «{{ l.business_name }}» и запустить пилот прямо сейчас?');" class="inline">
+                                <button type="submit" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs px-2.5 py-1.5 rounded-lg transition inline-flex items-center gap-1 shadow-sm" title="Создать заведение и сгенерировать QR-коды">
+                                    <span>⚡ Запустить</span>
+                                </button>
+                            </form>
                             <a href="https://wa.me/{{ raw_digits }}?text=Здравствуйте,%20{{ l.name }}!%20Меня%20зовут%20Али,%20сервис%20GeoPulse.%20Вы%20оставляли%20заявку%20на%2014-дневный%20бесплатный%20пилот%20для%20«{{ l.business_name }}»." target="_blank" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs px-3 py-1.5 rounded-lg transition inline-flex items-center gap-1">
                                 <span>💬 WhatsApp</span>
                             </a>

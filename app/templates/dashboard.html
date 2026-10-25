@@ -35,6 +35,35 @@
             </div>
         </header>
 
+        <!-- Статус подписки / Пилотного периода -->
+        {% if is_pilot %}
+        <div class="mb-8 p-4 sm:p-5 rounded-2xl bg-gradient-to-r from-indigo-500/10 via-purple-500/10 to-pink-500/10 border border-indigo-200/80 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
+            <div class="flex items-center gap-3.5">
+                <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-lg shrink-0 shadow-sm">
+                    ⏳
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-black uppercase tracking-wider px-2 py-0.5 rounded-md bg-indigo-600 text-white">Тестовый пилот</span>
+                        <span class="text-xs text-slate-500 font-semibold">Осталось: <b class="text-indigo-950 font-bold">{{ pilot_days_left }} дн.</b></span>
+                    </div>
+                    <p class="text-xs text-slate-600 mt-0.5">Вам открыт полный доступ к перехвату негатива, ИИ-ассистенту и генерации тейбл-тентов.</p>
+                </div>
+            </div>
+            <a href="/#pricing" target="_blank" class="self-stretch sm:self-auto text-center px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-xs rounded-xl shadow-md transition shrink-0">
+                Оформить подписку (990 ₽/мес) ➔
+            </a>
+        </div>
+        {% else %}
+        <div class="mb-8 px-4 py-2.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between text-xs">
+            <div class="flex items-center gap-2">
+                <span class="text-emerald-600 font-bold">🟢 Тариф PRO активен</span>
+                <span class="text-slate-500">• Полная защита репутации на картах включена</span>
+            </div>
+            <a href="/#pricing" target="_blank" class="text-emerald-700 hover:underline font-semibold">Управление тарифом ↗</a>
+        </div>
+        {% endif %}
+
         <!-- Метрики / KPI карточки -->
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-8">
             

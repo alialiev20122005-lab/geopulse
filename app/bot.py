@@ -15,7 +15,9 @@ from app.database import (
     get_business_stats,
     get_businesses_by_chat_id,
     get_daily_digest,
-    get_all_businesses
+    get_all_businesses,
+    get_feedback_by_id,
+    update_feedback_status
 )
 
 logger = logging.getLogger("GeoPulseBot")
@@ -70,7 +72,7 @@ async def send_message(chat_id: str, text: str, reply_markup: Optional[dict] = N
         logger.error(f"❌ Ошибка отправки сообщения пользователю {chat_id}: {e}")
         return False
 
-async def broadcast_feedback(business_id: str, rating: int, comment: str, contact: str, table_number: str = ""):
+async def broadcast_feedback(business_id: str, rating: int, comment: str, contact: str, table_number: str = "", feedback_id: Optional[int] = None):
     """Рассылка отзыва всем привязанным управляющим: перехват негатива или оповещение о довольном клиенте."""
     business = get_business(business_id)
     business_name = business["name"] if business else business_id
@@ -188,6 +190,15 @@ async def broadcast_feedback(business_id: str, rating: int, comment: str, contac
                         }
                     ])
 
+        # Кнопка быстрого урегулирования инцидента прямо из Telegram
+        if feedback_id:
+            buttons.append([
+                {
+                    "text": "✅ Отметить урегулированным",
+                    "callback_data": f"resolve:{feedback_id}"
+                }
+            ])
+
         # Кнопка открытия аналитики/дашборда заведения доступна всегда
         buttons.append([
             {
@@ -258,14 +269,74 @@ async def telegram_polling_loop():
     offset = 0
     url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/getUpdates"
 
-    while True:
-        try:
-            async with httpx.AsyncClient(timeout=30.0) as client:
+    async with httpx.AsyncClient(timeout=30.0) as client:
+        while True:
+            try:
                 resp = await client.get(url, params={"offset": offset, "timeout": 20})
                 if resp.status_code == 200:
                     data = resp.json()
                     for update in data.get("result", []):
                         offset = update["update_id"] + 1
+
+                        # 0. Обработка нажатий на инлайн-кнопки (callback_query)
+                        callback_query = update.get("callback_query")
+                        if callback_query:
+                            cq_id = callback_query.get("id")
+                            cq_data = callback_query.get("data", "")
+                            cq_from = callback_query.get("from", {})
+                            cq_chat_id = str(cq_from.get("id"))
+                            cq_msg = callback_query.get("message", {})
+                            cq_msg_id = cq_msg.get("message_id")
+                            cq_msg_chat_id = str(cq_msg.get("chat", {}).get("id"))
+
+                            if cq_data.startswith("resolve:"):
+                                try:
+                                    fb_id = int(cq_data.split(":", 1)[1])
+                                    fb = get_feedback_by_id(fb_id)
+                                    if fb:
+                                        user_bizs = get_businesses_by_chat_id(cq_chat_id)
+                                        user_biz_ids = [b["id"] for b in user_bizs]
+                                        is_authorized = (fb["business_id"] in user_biz_ids) or (TELEGRAM_CHAT_ID and cq_chat_id == str(TELEGRAM_CHAT_ID))
+                                        if is_authorized:
+                                            update_feedback_status(fb_id, "resolved")
+                                            await client.post(
+                                                f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/answerCallbackQuery",
+                                                json={"callback_query_id": cq_id, "text": "✅ Обращение отмечено как урегулированное!", "show_alert": False}
+                                            )
+                                            existing_markup = cq_msg.get("reply_markup", {}).get("inline_keyboard", [])
+                                            new_keyboard = []
+                                            for row in existing_markup:
+                                                new_row = []
+                                                for btn in row:
+                                                    if btn.get("callback_data") == cq_data:
+                                                        new_row.append({"text": "✅ Урегулировано", "callback_data": "done"})
+                                                    else:
+                                                        new_row.append(btn)
+                                                if new_row:
+                                                    new_keyboard.append(new_row)
+                                            await client.post(
+                                                f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/editMessageReplyMarkup",
+                                                json={"chat_id": cq_msg_chat_id, "message_id": cq_msg_id, "reply_markup": {"inline_keyboard": new_keyboard}}
+                                            )
+                                        else:
+                                            await client.post(
+                                                f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/answerCallbackQuery",
+                                                json={"callback_query_id": cq_id, "text": "⚠️ У вас нет прав для изменения статуса этого заведения.", "show_alert": True}
+                                            )
+                                    else:
+                                        await client.post(
+                                            f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/answerCallbackQuery",
+                                            json={"callback_query_id": cq_id, "text": "Отзыв не найден.", "show_alert": False}
+                                        )
+                                except Exception as e:
+                                    logger.error(f"Ошибка обработки callback_query: {e}")
+                            elif cq_data == "done":
+                                await client.post(
+                                    f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/answerCallbackQuery",
+                                    json={"callback_query_id": cq_id, "text": "Этот инцидент уже успешно урегулирован.", "show_alert": False}
+                                )
+                            continue
+
                         message = update.get("message")
                         if not message or "text" not in message:
                             continue
@@ -460,8 +531,8 @@ async def telegram_polling_loop():
                     logger.warning(f"Telegram polling status {resp.status_code}. Sleeping 5s before retry.")
                     await asyncio.sleep(5)
 
-        except asyncio.CancelledError:
-            break
-        except Exception as e:
-            logger.error(f"Ошибка в цикле Telegram поллинга: {e}")
-            await asyncio.sleep(5)
+            except asyncio.CancelledError:
+                break
+            except Exception as e:
+                logger.error(f"Ошибка в цикле Telegram поллинга: {e}")
+                await asyncio.sleep(5)

@@ -342,6 +342,45 @@ async def _execute_all():
         assert "total_24h" in data
         print("  -> /api/digest endpoint returned 200 OK with valid metrics!")
 
+        # TEST 13: 1-Click Lead Conversion & Security Rate Limiter Verification
+        print("\n[TEST 13] Verifying 1-Click Lead Conversion & Security Rate Limiting...")
+        from app.rate_limiter import admin_login_rate_limiter
+        from app.database import create_lead, get_lead_by_id, get_business
+
+        # 1. 1-Click Lead Conversion to Pilot Business
+        lead_id = create_lead("Магомед Владелец", "Горный Бриз", "+7 (999) 777-66-55", "г. Махачкала", "15")
+        # Unauthenticated request blocked
+        unauth_conv = await client.post(f"/admin/leads/{lead_id}/convert", follow_redirects=False)
+        assert unauth_conv.status_code == 303 and "/admin/login" in unauth_conv.headers["location"]
+
+        # Authenticated conversion
+        conv_resp = await client.post(f"/admin/leads/{lead_id}/convert", cookies={"geopulse_admin_session": admin_cookie}, follow_redirects=False)
+        assert conv_resp.status_code == 303
+        assert "gornyy_briz" in conv_resp.headers["location"]
+        
+        # Verify created business
+        biz = get_business("gornyy_briz")
+        assert biz is not None
+        assert biz["name"] == "Горный Бриз"
+        assert biz["status"] == "pilot"
+        
+        # Verify lead status updated
+        updated_lead = get_lead_by_id(lead_id)
+        assert updated_lead["status"] == "pilot_active"
+        print("  -> 1-Click Lead to Pilot Business conversion PASSED!")
+
+        # 2. Admin Login Rate Limiting
+        admin_login_rate_limiter.reset()
+        # 5 allowed attempts
+        for _ in range(5):
+            admin_login_rate_limiter.check("127.0.0.1")
+        # 6th attempt should be blocked
+        assert admin_login_rate_limiter.check("127.0.0.1") is False
+        blocked_resp = await client.post("/admin/login", data={"username": "fake", "password": "wrong"})
+        assert blocked_resp.status_code == 429
+        print("  -> Admin login brute-force rate limiter (429) PASSED!")
+        admin_login_rate_limiter.reset()
+
     print("\n=== ALL AUDIT & REGRESSION TESTS PASSED (100% SUCCESS) ===")
 
 async def run_tests():
@@ -358,7 +397,8 @@ async def run_tests():
             print("\n[TEARDOWN] Purging test feedbacks, leads, payments and restoring state...")
             with db.get_connection() as c:
                 c.execute("DELETE FROM feedbacks WHERE comment LIKE '%XSS%' OR comment = 'Отличный сервис!'")
-                c.execute("DELETE FROM leads WHERE phone = '+7 (999) 111-22-33' OR name = 'Иван Тест'")
+                c.execute("DELETE FROM leads WHERE phone IN ('+7 (999) 111-22-33', '+7 (999) 777-66-55') OR name IN ('Иван Тест', 'Магомед Владелец')")
+                c.execute("DELETE FROM businesses WHERE id = 'gornyy_briz'")
                 c.execute("DELETE FROM payments WHERE provider_payment_id LIKE 'test_%'")
                 c.execute("UPDATE businesses SET status = 'active' WHERE id IN ('zerno', 'sahara')")
                 c.commit()

@@ -17,6 +17,7 @@ from app.config import (
     SESSION_SECRET,
     TELEGRAM_BOT_USERNAME
 )
+from app.rate_limiter import admin_login_rate_limiter
 from app.database import (
     get_global_stats,
     get_all_businesses,
@@ -26,6 +27,7 @@ from app.database import (
     update_business,
     delete_business,
     get_recent_leads,
+    get_lead_by_id,
     update_lead_status,
     delete_lead,
     get_all_feedbacks_filtered,
@@ -79,7 +81,17 @@ async def handle_login(
     username: str = Form(...),
     password: str = Form(...)
 ):
-    """Обработка попытки входа с защитой от тайминг-атак."""
+    """Обработка попытки входа с защитой от тайминг-атак и защитой от брутфорса."""
+    client_ip = request.client.host if request.client else "unknown"
+    if not admin_login_rate_limiter.check(client_ip):
+        logger.warning(f"🚫 Превышен лимит попыток входа в админку с IP {client_ip}")
+        return templates.TemplateResponse(
+            request=request,
+            name="admin_login.html",
+            context={"error": "Слишком много попыток входа. Пожалуйста, подождите 1 минуту."},
+            status_code=429
+        )
+
     valid_user = secrets.compare_digest(username.strip(), ADMIN_USERNAME)
     valid_pass = secrets.compare_digest(password, ADMIN_PASSWORD)
     if valid_user and valid_pass:
@@ -290,6 +302,64 @@ async def admin_delete_lead(request: Request, lead_id: int):
         return RedirectResponse(url="/admin/login", status_code=303)
     delete_lead(lead_id)
     return RedirectResponse(url="/admin/leads?msg=Заявка+удалена", status_code=303)
+
+def transliterate_to_slug(text: str) -> str:
+    """Транслитерация кириллицы в аккуратный латинский slug для заведения."""
+    ru_map = {
+        'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo', 'ж': 'zh',
+        'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm', 'н': 'n', 'о': 'o',
+        'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u', 'ф': 'f', 'х': 'kh', 'ц': 'ts',
+        'ч': 'ch', 'ш': 'sh', 'щ': 'shch', 'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu',
+        'я': 'ya'
+    }
+    slug = []
+    for ch in text.lower():
+        if ch in ru_map:
+            slug.append(ru_map[ch])
+        elif ch.isalnum():
+            slug.append(ch)
+        elif ch in [' ', '-', '_']:
+            slug.append('_')
+    res = re.sub(r'_+', '_', ''.join(slug)).strip('_')
+    return res[:25]
+
+@router.post("/leads/{lead_id}/convert")
+async def admin_convert_lead_to_business(request: Request, lead_id: int):
+    """Конвертация заявки в действующее заведение со статусом 'pilot' в 1 клик."""
+    if not is_admin(request):
+        return RedirectResponse(url="/admin/login", status_code=303)
+
+    lead = get_lead_by_id(lead_id)
+    if not lead:
+        return RedirectResponse(url="/admin/leads?err=Заявка+не+найдена", status_code=303)
+
+    base_slug = transliterate_to_slug(lead["business_name"]) or f"venue_{lead_id}"
+    slug = base_slug
+    counter = 1
+    while get_business(slug):
+        slug = f"{base_slug}_{counter}"
+        counter += 1
+
+    city = lead.get("city") or "г. Махачкала"
+    name = lead["business_name"]
+    data = {
+        "id": slug,
+        "name": name,
+        "category": "Ресторан / Кафе",
+        "address": city,
+        "yandex_maps_url": f"https://yandex.ru/maps/?text={name}",
+        "two_gis_url": "",
+        "welcome_text": f"Поделитесь впечатлениями о визите в «{name}». Ваше мнение помогает нам становиться лучше!",
+        "negative_cta": "Нам очень жаль! Напишите управляющему, чтобы мы могли сразу исправить ситуацию:",
+        "positive_cta": "Спасибо за вашу оценку! Пожалуйста, поддержите нас отзывом на Яндекс.Картах ❤️",
+        "status": "pilot"
+    }
+    create_business(data)
+    update_lead_status(lead_id, "pilot_active")
+    logger.info(f"🚀 Заявка #{lead_id} ({name}) успешно конвертирована в заведение {slug}")
+    import urllib.parse
+    msg = urllib.parse.quote(f"Заведение «{name}» ({slug}) успешно создано! Пилот запущен")
+    return RedirectResponse(url=f"/admin/businesses?msg={msg}", status_code=303)
 
 @router.get("/leads/export")
 async def admin_export_leads(request: Request):
