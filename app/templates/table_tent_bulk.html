@@ -336,19 +336,23 @@
                 break-after: auto !important;
             }
 
+            .print-sheet.tent-sheet,
             .tent-sheet {
                 page-break-after: always !important;
                 break-after: page !important;
-                min-height: 275mm !important;
-                max-height: 285mm !important;
+                min-height: 265mm !important;
+                max-height: 278mm !important;
                 box-sizing: border-box !important;
                 display: flex !important;
                 flex-direction: column !important;
                 justify-content: space-between !important;
-                padding: 4mm 0 !important;
-                margin: 0 !important;
+                grid-template-columns: none !important;
+                padding: 2mm 0 !important;
+                margin: 0 auto !important;
                 box-shadow: none !important;
                 border: none !important;
+                gap: 0 !important;
+                overflow: hidden !important;
             }
             .tent-sheet:last-child {
                 page-break-after: auto !important;
@@ -377,11 +381,11 @@
                 -webkit-print-color-adjust: exact !important;
                 print-color-adjust: exact !important;
             }
-            .print-sheet {
+            .print-sheet.holder-sheet {
                 page-break-after: always !important;
                 break-after: page !important;
-                min-height: 275mm;
-                max-height: 285mm;
+                min-height: 270mm;
+                max-height: 280mm;
                 box-sizing: border-box;
                 display: grid !important;
                 grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
