@@ -81,6 +81,16 @@ SESSION_SECRET = os.getenv("SESSION_SECRET", "geopulse-super-secret-session-key-
 
 # Предустановленные карточки заведений для тестов и демонстраций
 BUSINESSES: Dict[str, Dict[str, Any]] = {
+    "peach": {
+        "name": "Кафе «Peach»",
+        "category": "Кофейня / Десерты",
+        "address": "г. Махачкала",
+        "yandex_maps_url": "https://yandex.ru/maps/org/105121463454",
+        "two_gis_url": "",
+        "welcome_text": "Поделитесь впечатлениями о визите в кафе «Peach». Ваше мнение помогает нам становиться лучше!",
+        "negative_cta": "Нам очень жаль! Напишите управляющему, чтобы мы могли сразу исправить ситуацию:",
+        "positive_cta": "Спасибо за вашу оценку! Пожалуйста, поддержите нас отзывом на Яндекс.Картах ❤️"
+    },
     "daikon": {
         "name": "Кафе «Daikon»",
         "category": "Кафе / Ресторан",
